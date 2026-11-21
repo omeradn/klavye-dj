@@ -126,4 +126,10 @@ kbd{background:#000;border:1px solid #444b57;border-bottom-width:2px;border-radi
 .lim .grm i{display:block;height:100%;width:0;background:var(--amber)}
 .lim #grTxt{font:11px ui-monospace,monospace;min-width:52px}
 .row .b.red.on{border-color:var(--red);color:var(--red)}
+
+/* key shift (TON) */
+.kshift{display:flex;flex-direction:column;align-items:center;gap:4px}
+.kshift .b{min-width:40px;padding:4px 8px;font-size:13px}
+.ksv{background:#0f1114;border:1px solid #353a44;border-radius:6px;color:var(--mut);font:700 13px ui-monospace,monospace;width:40px;padding:3px 0;cursor:pointer}
+.ksv.on{color:var(--violet);border-color:var(--violet)}
 @media(max-width:1100px){.console{grid-template-columns:1fr}}

@@ -13,6 +13,7 @@ export const BIND: Bind[] = [
   ['vinyl', 'KeyR', 'KeyO', 1, 'VINYL modu (jog ile scratch)'],
   ['reverse', 'Tab', 'BracketLeft', 0, 'REV (ters çal)'], ['slip', 'Tab', 'BracketLeft', 1, 'SLIP modu'],
   ['censor', 'IntlBackslash', 'Slash', 0, 'CENSOR (basılı tut)', 'h'], ['spinback', 'IntlBackslash', 'Slash', 1, 'SPIN (geri savurup dur)'],
+  ['keyUp', 'Backquote', 'BracketRight', 0, 'Ton +1 yarım ses'], ['keyDown', 'Backquote', 'BracketRight', 1, 'Ton −1 yarım ses'],
   ['jumpFwd', 'Digit5', 'Digit6', 0, 'Beat jump ileri (loop boyu kadar)'], ['jumpBack', 'Digit5', 'Digit6', 1, 'Beat jump geri'],
   ['sync', 'KeyE', 'KeyI', 0, 'SYNC (diğer deck\'in BPM\'ine eşitle)'], ['keylock', 'KeyE', 'KeyI', 1, 'Key Lock'],
   ['loop', 'KeyR', 'KeyO', 0, 'Loop aç / kapat'], ['loopDouble', 'KeyT', 'KeyP', 0, 'Loop ×2'], ['loopHalf', 'KeyT', 'KeyP', 1, 'Loop ½'],

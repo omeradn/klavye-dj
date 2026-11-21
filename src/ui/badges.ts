@@ -24,6 +24,7 @@ export function setupBadges(decks: Deck[]): void {
     badge(q('jumpFwd'), kk('jumpFwd', 0)); badge(q('jumpBack'), kk('jumpBack', 1));
     badge(q('vinyl'), kk('vinyl', 1)); badge(q('slip'), kk('slip', 1)); badge(q('reverse'), kk('reverse', 0));
     badge(q('censor'), kk('censor', 0)); badge(q('brake'), kk('brake', 1)); badge(q('spinback'), kk('spinback', 1));
+    badge(q('keyUp'), kk('keyUp', 0)); badge(q('keyDown'), kk('keyDown', 1));
     badge(q('jog'), '🖱 çevir');
     for (let n = 0; n < 4; n++) badge(q('hot' + (n + 1)), keyLabel(HOT_KEYS[i][n]));
     const cq = (a: string) => d.ch.querySelector(`[data-a="${a}"]`);

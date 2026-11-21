@@ -11,7 +11,9 @@ export type DeckIn =
   | { t: 'slip'; on: boolean }
   | { t: 'censor'; on: boolean }
   | { t: 'scratch'; on: boolean; rate: number }
-  | { t: 'vinyl'; fx: 'brake' | 'spin'; dur: number };
+  | { t: 'vinyl'; fx: 'brake' | 'spin'; dur: number }
+  /** lookahead = pitch-shifter latency in output samples; wet = use the pitch-corrected signal when possible */
+  | { t: 'keylock'; lookahead: number; wet: boolean };
 
 export interface DeckState {
   t: 'state';
@@ -21,6 +23,8 @@ export interface DeckState {
   audible: boolean;
   /** AudioContext time of this snapshot */
   at: number;
+  /** 0 = original signal, 1 = pitch-corrected (key lock / key shift) */
+  wet: number;
 }
 
 export type LimiterIn = { t: 'ceiling'; db: number };

@@ -2,7 +2,7 @@
 
 Tarayıcıda çalışan, klavye ve mouse ile kontrol edilen DJ uygulaması. Hedef: profesyonel bir DJ yazılımı + DJ'liği adım adım öğreten bir akademi + restoran setleri için özel modlar.
 
-> Durum: **Faz 1a tamam** — yeni ses motoru (AudioWorklet), master limiter, demo parçalar. Yol haritası için [CHANGELOG.md](CHANGELOG.md).
+> Durum: **Faz 1b tamam** — yeni ses motoru, master limiter, demo parçalar, key lock ve ton kaydırma. Yol haritası için [CHANGELOG.md](CHANGELOG.md).
 
 ## Gerekenler
 - Windows'ta **Node.js 20 veya üstü** (kontrol: `node -v`)
@@ -75,6 +75,7 @@ legacy/      ilk tek dosyalık sürüm (referans için)
 | REV — ters çal (⇧ = SLIP modu) | Tab | Ğ |
 | CENSOR — basılı tut (⇧ = SPIN) | < | . |
 | Beat jump ileri (⇧ = geri) | 5 | 6 |
+| TON +1 yarım ses (⇧ = −1) | " | Ü |
 
 Genel: `←` `→` `↓` crossfader · `PgUp` / `PgDn` master · `Esc` / `F1` yardım.
 Mouse: deck üzerinde tekerlek = tempo, bir kontrolün üzerinde tekerlek = o kontrol, çift tık = sıfırla.
@@ -83,3 +84,4 @@ Jog: VINYL açıkken iç kısmı tutup çevirmek = scratch; dış halka = tempo 
 ## Teknik notlar
 - Arayüz Svelte 5 ile (listeler, akademi ve ayar ekranları az kodla ve küçük paketle yazılabilsin diye); ses motoru ve dalga formu çizimi Svelte'ten bağımsız, düz TypeScript.
 - Demo ve test sesleri kodla üretilir; projede telifli müzik yoktur.
+- Key lock: [Signalsmith Stretch](https://github.com/Signalsmith-Audio/signalsmith-stretch) (MIT lisanslı). Ton düzelticinin 120 ms gecikmesi, deck motorunun 120 ms ileriden okuyan ikinci okuma kafasıyla gizlenir; bu yüzden tuşlar gecikmez.

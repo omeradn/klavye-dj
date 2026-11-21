@@ -1,5 +1,6 @@
 import deckWorkletUrl from './worklets/deck-processor.ts?worker&url';
 import limiterWorkletUrl from './worklets/limiter-processor.ts?worker&url';
+import keylockMixWorkletUrl from './worklets/keylock-mix-processor.ts?worker&url';
 import type { LimiterStats } from './worklets/protocol';
 
 /**
@@ -19,10 +20,10 @@ export const engine: {
   meter: { gr: 1, peakIn: 0, peakOut: 0, overAt: -1e9, limitAt: -1e9 },
 };
 
-const hooks: ((ctx: AudioContext) => void)[] = [];
+const hooks: ((ctx: AudioContext) => void | Promise<void>)[] = [];
 
-/** Run `fn` once the AudioContext and its worklets are ready (deck wiring, mixer, etc.). */
-export function onCtxCreated(fn: (ctx: AudioContext) => void): void {
+/** Run `fn` once the AudioContext and its worklets are ready (deck wiring, mixer, etc.). `engine.ready` waits for it. */
+export function onCtxCreated(fn: (ctx: AudioContext) => void | Promise<void>): void {
   hooks.push(fn);
 }
 
@@ -39,6 +40,7 @@ export function ensureCtx(): AudioContext {
   engine.ready = (async () => {
     await ctx.audioWorklet.addModule(deckWorkletUrl);
     await ctx.audioWorklet.addModule(limiterWorkletUrl);
+    await ctx.audioWorklet.addModule(keylockMixWorkletUrl);
     const lim = new AudioWorkletNode(ctx, 'limiter', { numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [2] });
     lim.port.onmessage = e => {
       const s = e.data as LimiterStats, m = engine.meter, now = performance.now();
@@ -48,7 +50,7 @@ export function ensureCtx(): AudioContext {
     };
     engine.master!.connect(lim).connect(ctx.destination);
     engine.limiter = lim;
-    hooks.forEach(h => h(ctx));
+    for (const h of hooks) await h(ctx);
   })();
   return ctx;
 }

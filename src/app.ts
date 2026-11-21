@@ -28,9 +28,9 @@ export function initApp(): void {
   const xf = new Fader($('#xf'), { vertical: false, min: -1, max: 1, def: 0, onchange: v => mixer.setXF(v) });
   $('#xf').classList.add('tick');
 
-  onCtxCreated(() => {
+  onCtxCreated(async () => {
     engine.master!.gain.value = masterK.v;
-    decks.forEach(d => d.wire());
+    await Promise.all(decks.map(d => d.wire()));
     mixer.apply();
   });
 
@@ -61,6 +61,9 @@ export function initApp(): void {
     Escape: () => toggleHelp(),
     F1: () => toggleHelp(),
   });
+
+  // dev-only handle for debugging in the browser console (not in production builds)
+  if (import.meta.env.DEV) (window as unknown as Record<string, unknown>).kdj = { decks, engine, mixer };
 
   setupBadges(decks);
   buildHelpTable();

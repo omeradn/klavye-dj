@@ -2,7 +2,7 @@
 
 ## Yol haritası (onaylanan sıra)
 0. Kurulum ve taşıma ✅
-1. Ses motoru — 1a ✅ (worklet, limiter, demo) · 1b key lock · 1c kulaklık cue
+1. Ses motoru — 1a ✅ (worklet, limiter, demo) · 1b ✅ key lock · 1c kulaklık cue
 2. Analiz ve kütüphane (beatgrid, gerçek SYNC, ton, Türk ritimleri, IndexedDB)
 3. Akademi (dersler, beatmatch antrenörü, geçiş sınavı)
 4. Restoran Modu, set kaydı, canlı koç, geçiş asistanı
@@ -10,6 +10,20 @@
 6. MIDI ve tuş değiştirme
 7. Reels çıktısı, hayalet mod, set planlayıcı
 8. Cila ve yayın
+
+## 0.3.0 — Faz 1b · Key lock ve ton kaydırma (2026-11-21)
+### Eklendi
+- **Key lock** yeni motorda: tempo değişse de ton aynı kalır (varsayılan açık; KEY butonu / ⇧E, ⇧I).
+- **Ton kaydırma (TON)** ±12 yarım ses: tempo fader'ının altındaki ♯ / ♭ butonları, klavyede `"` / `⇧"` (A) ve `Ü` / `⇧Ü` (B). Değere tıklayınca sıfırlanır.
+- Gecikmesiz tasarım: ton düzeltici (Signalsmith Stretch, MIT) 120 ms gecikmeli çalışır, ama deck motoru ona sesi 120 ms ileriden besler. Böylece düzeltilmiş ses orijinalle örnek örnek hizalı çıkar; PLAY, CUE, hot cue anında tepki verir.
+  - Atlamadan (hot cue, sarma, beat jump, loop aç/kapa) sonraki 120 ms ve scratch / REV / CENSOR / BRAKE / SPIN sırasında orijinal ses çalar, sonra fark edilmeden düzeltilmiş sese geçer.
+  - Tempo %0 ve ton kaydırma 0 iken ses hiç işlenmez (orijinal kalite).
+- Testler: ileri okuma kafasının ana kafayla tam hizalı olduğu (tempo +%5, loop içinde), atlamadan sonra orijinale düşüp geri döndüğü ve mikserin doğru karıştırdığı (toplam 24 test).
+
+### Ölçüldü (tarayıcıda, demo parçadaki La minör akorla)
+- +%6 tempo, key lock açık: 220 Hz → 219,97 Hz (ton korunuyor). Key lock kapalı: 233,4 Hz (beklenen 233,2).
+- −%8 tempo, key lock açık: akor notaları beklenenden en fazla ~0,1 yarım ses sapıyor.
+- TON +2: 220 → 248,8 Hz (beklenen 246,9).
 
 ## 0.2.0 — Faz 1a · Yeni ses motoru (2026-11-21)
 Faz 1 üç ara durağa bölündü: **1a** ses motoru · **1b** key lock + ton kaydırma · **1c** kulaklık cue + gecikme ayarı.
@@ -32,7 +46,7 @@ Faz 1 üç ara durağa bölündü: **1a** ses motoru · **1b** key lock + ton ka
 - ECHO artık crossfader'dan sonra: crossfader'ı çekince yankı kuyruğu kesilmeden söner ("echo out").
 
 ### Geçici olarak eksik
-- Key lock: yeni motora Faz 1b'de ekleniyor (şu an tempo değişince ton da değişir).
+- Key lock: yeni motora Faz 1b'de eklendi.
 
 ## 0.1.0 — Faz 0 · Kurulum ve taşıma (2026-11-21)
 ### Eklendi

@@ -5,12 +5,18 @@ import { detectBPM } from '../analysis/bpm';
 import { computePeaks, PPS } from '../analysis/peaks';
 import { DEMOS, renderDemo } from '../demo/synth';
 import type { DeckIn, DeckState } from './worklets/protocol';
+import SignalsmithStretch, { type StretchNode } from 'signalsmith-stretch';
 
 const AUDIO_EXT = /\.(mp3|wav|m4a|aac|ogg|flac|aiff?)$/i;
 /** One platter revolution = 1.8 s of audio (33 1/3 rpm vinyl). */
 const SEC_PER_REV = 1.8;
 /** Jog ring (outer part) = nudge; inner part = scratch (when VINYL is on). */
 const JOG_RING = 0.8;
+/**
+ * Pitch-shifter block size. Its latency (= this) is hidden by the look-ahead read head,
+ * so it only decides quality and how long we stay on the original signal after a jump.
+ */
+const KEYLOCK_BLOCK_MS = 120;
 
 /**
  * One deck: transport, tempo, cues, loops + its mixer channel strip.
@@ -39,7 +45,12 @@ export class Deck {
   bpm: number | null = null;
   loopOn = false; loopBeats = 4; loopS = 0; loopE = 0;
   kills = { lo: false, mid: false, hi: false };
-  fxOn = false; keyLock = false;
+  fxOn = false; keyLock = true;
+  /** manual key shift in semitones (−12…+12) */
+  keyShift = 0;
+  wet = 0;
+  private lookahead = 0;
+  private lastSemis = NaN;
   reverse = false; slip = false; censor = false; vinyl = true;
   scratching = false; scratchLast = 0; scratchIdle = true;
   peaks: Float32Array | null = null;
@@ -60,6 +71,9 @@ export class Deck {
 
   // audio graph
   node?: AudioWorkletNode;
+  stretch?: StretchNode;
+  klMix?: AudioWorkletNode;
+  private wiring?: Promise<void>;
   trim?: GainNode;
   lo?: BiquadFilterNode; mid?: BiquadFilterNode; hi?: BiquadFilterNode; fil?: BiquadFilterNode;
   chGain?: GainNode; xfG?: GainNode; fxSend?: GainNode; fb?: GainNode;
@@ -117,7 +131,13 @@ export class Deck {
       <div class="dbody">
         <div class="jogwrap"><div class="jog" data-a="jog" title="İç kısım: scratch (VINYL açıkken) · Dış halka: tempo dürtme"><div class="platter"><i></i></div><div class="jogc"><div><b class="jt">0:00</b><span class="jr">-0:00</span></div></div></div></div>
         <div class="tcol"><span class="lbl">TEMPO</span><div class="tf" data-a="tempo"></div>
-          <button class="b" data-a="tempoReset">0%</button></div>
+          <button class="b" data-a="tempoReset">0%</button>
+          <span class="lbl">TON</span>
+          <div class="kshift">
+            <button class="b" data-a="keyUp" title="Tonu yarım ses yükselt">♯</button>
+            <button class="ksv" data-a="keyReset" title="Ton kaydırma · tıkla: sıfırla">0</button>
+            <button class="b" data-a="keyDown" title="Tonu yarım ses düşür">♭</button>
+          </div></div>
       </div>
       <div class="row">
         <button class="b amber" data-a="sync">SYNC</button>
@@ -154,7 +174,7 @@ export class Deck {
     const sel = (s: string) => this.el.querySelector<HTMLElement>(s)!;
     this.ui = {
       title: sel('.dtitle'), bpm: sel('.dbpm'), rem: sel('.rem'), tp: sel('.tp'), kl: sel('.kl'), lp: sel('.lp'),
-      jt: sel('.jt'), jr: sel('.jr'), platter: sel('.platter'),
+      jt: sel('.jt'), jr: sel('.jr'), platter: sel('.platter'), ksv: sel('.ksv'),
     };
 
     this.tempoF = new Fader(q('tempo'), {
@@ -170,7 +190,7 @@ export class Deck {
 
     const click = (a: string, fn: (e: MouseEvent) => void) => q(a).addEventListener('click', e => { ensureCtx(); fn(e); });
     for (const a of ['play', 'sync', 'keylock', 'loop', 'loopHalf', 'loopDouble', 'jumpBack', 'jumpFwd', 'load', 'demo',
-      'tempoReset', 'vinyl', 'slip', 'reverse', 'brake', 'spinback']) click(a, () => this.act(a));
+      'tempoReset', 'vinyl', 'slip', 'reverse', 'brake', 'spinback', 'keyUp', 'keyDown', 'keyReset']) click(a, () => this.act(a));
     [1, 2, 3, 4].forEach((n, i) => click('hot' + n, e => this.act(e.shiftKey ? 'hotDel' : 'hot', i)));
     [1, 2, 4, 8].forEach(n => click('bl' + n, () => this.beatLoop(n)));
 
@@ -263,21 +283,40 @@ export class Deck {
     this.filK.w.dataset.a = 'filter'; this.trimK.w.dataset.a = 'trim';
   }
 
+  /** Build the audio graph once (safe to call repeatedly). */
+  wire(): Promise<void> {
+    return this.wiring ??= this.buildGraph();
+  }
+
   /**
-   * Build the audio graph (once, after the worklets are loaded):
-   * deck worklet -> trim -> EQ -> filter -> channel fader -> crossfader -> bus
-   *                                                       crossfader -> echo send -> delay -> bus
+   * deck worklet ─ out0 (original + wet weight) ──────────────► keylock-mix ─► trim ─► EQ ─► filter ─► channel fader ─► crossfader ─► bus
+   *              └ out1 (look-ahead) ─► pitch shifter ─────────┘                                        crossfader ─► echo ─► bus
    * (echo is post-crossfader so its tail keeps ringing after an "echo out" with the crossfader)
    */
-  wire(): void {
-    if (this.wired || !engine.ctx || !engine.bus) return;
-    this.wired = true;
+  private async buildGraph(): Promise<void> {
+    if (!engine.ctx || !engine.bus) return;
     const C = engine.ctx;
-    this.node = new AudioWorkletNode(C, 'deck', { numberOfInputs: 0, numberOfOutputs: 1, outputChannelCount: [2] });
+    this.node = new AudioWorkletNode(C, 'deck', { numberOfInputs: 0, numberOfOutputs: 2, outputChannelCount: [3, 2] });
     this.node.port.onmessage = e => {
       const s = e.data as DeckState;
-      this.pos = s.pos; this.posAt = s.at; this.rateNow = s.rate; this.playing = s.playing; this.audible = s.audible;
+      this.pos = s.pos; this.posAt = s.at; this.rateNow = s.rate; this.playing = s.playing; this.audible = s.audible; this.wet = s.wet;
     };
+    this.klMix = new AudioWorkletNode(C, 'keylock-mix', {
+      numberOfInputs: 2, numberOfOutputs: 1, outputChannelCount: [2],
+      channelCount: 3, channelCountMode: 'explicit', channelInterpretation: 'discrete',
+    });
+    this.node.connect(this.klMix, 0, 0);
+    try {
+      const st = await SignalsmithStretch(C, { numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [2] });
+      await st.configure({ blockMs: KEYLOCK_BLOCK_MS });
+      this.lookahead = Math.round((await st.latency()) * C.sampleRate);
+      await st.schedule({ active: true, semitones: 0 });
+      this.node.connect(st, 1, 0);
+      st.connect(this.klMix, 0, 1);
+      this.stretch = st;
+    } catch {
+      toast('Key lock başlatılamadı; şarkılar key lock olmadan çalar');
+    }
     this.trim = C.createGain(); this.trim.gain.value = this.trimK.v;
     this.lo = C.createBiquadFilter(); this.lo.type = 'lowshelf'; this.lo.frequency.value = 220;
     this.mid = C.createBiquadFilter(); this.mid.type = 'peaking'; this.mid.frequency.value = 1000; this.mid.Q.value = 0.7;
@@ -288,14 +327,33 @@ export class Deck {
     this.fxSend = C.createGain(); this.fxSend.gain.value = 0;
     this.delay = C.createDelay(4); this.fb = C.createGain(); this.fb.gain.value = 0.45;
     this.an = C.createAnalyser(); this.an.fftSize = 1024;
-    this.node.connect(this.trim).connect(this.lo).connect(this.mid).connect(this.hi).connect(this.fil).connect(this.chGain);
+    this.klMix.connect(this.trim).connect(this.lo).connect(this.mid).connect(this.hi).connect(this.fil).connect(this.chGain);
     this.chGain.connect(this.xfG); this.chGain.connect(this.an);
     this.xfG.connect(engine.bus);
     this.xfG.connect(this.fxSend).connect(this.delay);
     this.delay.connect(this.fb).connect(this.delay);
     this.delay.connect(engine.bus);
+    this.wired = true;
     this.applyEQ(); this.applyFilter(this.filK.v); this.applyFX(); this.applyRate();
     this.post({ t: 'slip', on: this.slip });
+  }
+
+  /** Playback speed factor from tempo fader + pitch bend + jog nudge. */
+  private speed(): number { return clamp(1 + this.tempo + this.bend + this.jogBend, 0.25, 3); }
+
+  /**
+   * Pitch correction in semitones: key lock cancels the pitch change of the tempo,
+   * key shift adds a manual transposition on top.
+   */
+  private updateKeylock(): void {
+    if (!this.stretch) return;
+    const semis = this.keyShift + (this.keyLock ? -12 * Math.log2(this.speed()) : 0);
+    const wet = Math.abs(semis) > 0.01;
+    this.post({ t: 'keylock', lookahead: this.lookahead, wet });
+    if (!(Math.abs(semis - this.lastSemis) < 0.003)) {
+      this.lastSemis = semis;
+      void this.stretch.schedule({ active: true, semitones: semis });
+    }
   }
 
   /* ---------- loading ---------- */
@@ -329,7 +387,7 @@ export class Deck {
 
   private async setTrack(name: string, L: Float32Array, R: Float32Array, sr: number, bpm: number | null): Promise<void> {
     await engine.ready;
-    this.wire();
+    await this.wire();
     this.len = L.length; this.sr = sr; this.title = name;
     Object.assign(this, { pos: 0, posAt: 0, playing: false, audible: false, cuePt: 0, cuePreview: false,
       hot: [null, null, null, null], bpm, loopOn: false, reverse: false, censor: false, ovImg: null });
@@ -372,7 +430,14 @@ export class Deck {
         this.setPlaying(!this.playing);
         break;
       case 'sync': this.sync(); break;
-      case 'keylock': toast('Key lock yeni ses motoruna Faz 1b\'de ekleniyor'); break;
+      case 'keylock':
+        this.keyLock = !this.keyLock; this.updateKeylock();
+        toast(`Deck ${this.id}: key lock ${this.keyLock ? 'açık (tempo değişse de ton aynı kalır)' : 'kapalı (tempo ile ton da değişir)'}`);
+        break;
+      case 'keyUp': case 'keyDown': case 'keyReset':
+        this.keyShift = a === 'keyReset' ? 0 : clamp(this.keyShift + (a === 'keyUp' ? 1 : -1), -12, 12);
+        this.updateKeylock();
+        break;
       case 'loop': if (this.loopOn) this.loopOff(); else this.beatLoop(this.loopBeats); break;
       case 'loopHalf': this.resizeLoop(0.5); break;
       case 'loopDouble': this.resizeLoop(2); break;
@@ -448,7 +513,7 @@ export class Deck {
 
   setBend(v: number): void { this.bend = v; this.applyRate(); }
 
-  applyRate(): void { this.post({ t: 'tempo', v: clamp(1 + this.tempo + this.bend + this.jogBend, 0.25, 3) }); }
+  applyRate(): void { this.post({ t: 'tempo', v: this.speed() }); this.updateKeylock(); }
 
   beatLen(): number { return 60 / (this.bpm || 120); }
 
@@ -538,6 +603,8 @@ export class Deck {
     const tp = this.tempo * 100;
     setText(ui.tp, (tp >= 0 ? '+' : '') + tp.toFixed(2) + '%');
     ui.kl.style.color = this.keyLock ? 'var(--green)' : '';
+    setText(ui.ksv, (this.keyShift > 0 ? '+' : '') + this.keyShift);
+    ui.ksv.classList.toggle('on', this.keyShift !== 0);
     const bpm = this.bpm ? (this.bpm * (1 + this.tempo)).toFixed(1) : '—';
     const bpmHtml = `${bpm} <small>BPM</small>`;
     if (ui.bpm.innerHTML !== bpmHtml) ui.bpm.innerHTML = bpmHtml;
