@@ -1,23 +1,23 @@
-﻿# Klavye DJ
+# Klavye DJ
 
-TarayÄ±cÄ±da Ã§alÄ±ÅŸan, klavye ve mouse ile kontrol edilen DJ uygulamasÄ±. Hedef: profesyonel bir DJ yazÄ±lÄ±mÄ± + DJ'liÄŸi adÄ±m adÄ±m Ã¶ÄŸreten bir akademi + restoran setleri iÃ§in Ã¶zel modlar.
+Tarayıcıda çalışan, klavye ve mouse ile kontrol edilen DJ uygulaması. Hedef: profesyonel bir DJ yazılımı + DJ'liği adım adım öğreten bir akademi + restoran setleri için özel modlar.
 
-> Durum: **Faz 0 tamam** â€” eski tek dosyalÄ±k sÃ¼rÃ¼m (klavye-dj.html) Vite + TypeScript + Svelte projesine taÅŸÄ±ndÄ±. Yol haritasÄ± iÃ§in [CHANGELOG.md](CHANGELOG.md).
+> Durum: **Faz 0 tamam** — eski tek dosyalık sürüm (klavye-dj.html) Vite + TypeScript + Svelte projesine taşındı. Yol haritası için [CHANGELOG.md](CHANGELOG.md).
 
 ## Gerekenler
-- Windows'ta **Node.js 20 veya Ã¼stÃ¼** (kontrol: `node -v`)
-- **Chrome** ya da **Edge** (ses kartÄ± seÃ§imi, klasÃ¶r eriÅŸimi ve MIDI yalnÄ±zca bunlarda tam Ã§alÄ±ÅŸÄ±r)
+- Windows'ta **Node.js 20 veya üstü** (kontrol: `node -v`)
+- **Chrome** ya da **Edge** (ses kartı seçimi, klasör erişimi ve MIDI yalnızca bunlarda tam çalışır)
 
 ## En kolay yol
-Proje klasÃ¶rÃ¼ndeki **`baslat.cmd`** dosyasÄ±na Ã§ift tÄ±kla. Ä°lk seferde paketleri kurar, sonra uygulamayÄ± tarayÄ±cÄ±da aÃ§ar. Kapatmak iÃ§in siyah pencereyi kapat.
+Proje klasöründeki **`baslat.cmd`** dosyasına çift tıkla. İlk seferde paketleri kurar, sonra uygulamayı tarayıcıda açar. Kapatmak için siyah pencereyi kapat.
 
-## Terminalden Ã§alÄ±ÅŸtÄ±rma
-> PowerShell'de `npm` yerine **`npm.cmd`** yaz. Windows betik gÃ¼venlik ayarÄ± (`running scripts is disabled`) yÃ¼zÃ¼nden `npm` tek baÅŸÄ±na Ã§alÄ±ÅŸmayabilir; `npm.cmd` bu ayara takÄ±lmaz.
+## Terminalden çalıştırma
+> PowerShell'de `npm` yerine **`npm.cmd`** yaz. Windows'un betik güvenlik ayarı (`running scripts is disabled`) yüzünden `npm` tek başına çalışmayabilir; `npm.cmd` bu ayara takılmaz.
 
-Ã–nce proje klasÃ¶rÃ¼ne geÃ§:
+Önce proje klasörüne geç:
 
 ```powershell
-cd "C:\Users\MSÄ° PC\Projects\klavye-dj"
+cd "C:\Users\MSİ PC\Projects\klavye-dj"
 ```
 
 Paketleri kur (bir kez):
@@ -26,54 +26,54 @@ Paketleri kur (bir kez):
 npm.cmd install
 ```
 
-UygulamayÄ± baÅŸlat, sonra tarayÄ±cÄ±da http://localhost:5173 adresini aÃ§:
+Uygulamayı başlat, sonra tarayıcıda http://localhost:5173 adresini aç:
 
 ```powershell
 npm.cmd run dev
 ```
 
-Durdurmak iÃ§in terminalde `Ctrl + C`.
+Durdurmak için terminalde `Ctrl + C`.
 
-## DiÄŸer komutlar
+## Diğer komutlar
 | Komut | Ne yapar |
 |---|---|
-| `npm.cmd test` | Analiz testlerini Ã§alÄ±ÅŸtÄ±rÄ±r (BPM tespiti vb.) |
-| `npm.cmd run check` | Kodda tip hatasÄ± var mÄ± kontrol eder |
-| `npm.cmd run build` | YayÄ±na hazÄ±r sÃ¼rÃ¼mÃ¼ `dist/` klasÃ¶rÃ¼ne Ã¼retir |
-| `npm.cmd run build:single` | Tek dosyalÄ±k sÃ¼rÃ¼mÃ¼ `dist-single/index.html` olarak Ã¼retir (Ã§ift tÄ±klayÄ±p aÃ§Ä±labilir) |
+| `npm.cmd test` | Analiz testlerini çalıştırır (BPM tespiti vb.) |
+| `npm.cmd run check` | Kodda tip hatası var mı kontrol eder |
+| `npm.cmd run build` | Yayına hazır sürümü `dist/` klasörüne üretir |
+| `npm.cmd run build:single` | Tek dosyalık sürümü `dist-single/index.html` olarak üretir (çift tıklayıp açılabilir) |
 
-## KlasÃ¶r yapÄ±sÄ±
+## Klasör yapısı
 ```
 src/
   engine/    ses motoru: deck, mikser, AudioContext
   analysis/  BPM tespiti, dalga formu (ileride: beatgrid, ton)
-  input/     klavye haritasÄ± (ileride: MIDI, gamepad)
-  ui/        knob/fader kontrolleri, tuÅŸ etiketleri, yardÄ±m penceresi
-  App.svelte ekran dÃ¼zeni
-  styles.css gÃ¶rÃ¼nÃ¼m
+  input/     klavye haritası (ileride: MIDI, gamepad)
+  ui/        knob/fader kontrolleri, tuş etiketleri, yardım penceresi
+  App.svelte ekran düzeni
+  styles.css görünüm
 tests/       Vitest testleri (sentetik, telifsiz test sesleriyle)
-legacy/      ilk tek dosyalÄ±k sÃ¼rÃ¼m (referans iÃ§in)
+legacy/      ilk tek dosyalık sürüm (referans için)
 ```
-Ä°leride eklenecek klasÃ¶rler: `library`, `academy`, `coach`, `demo`.
+İleride eklenecek klasörler: `library`, `academy`, `coach`, `demo`.
 
-## Klavye dÃ¼zeni (TÃ¼rkÃ§e Q)
+## Klavye düzeni (Türkçe Q)
 | Kontrol | Deck A | Deck B |
 |---|---|---|
-| Hot cue 1â€“4 (â‡§ = sil) | 1 2 3 4 | 7 8 9 0 |
-| Ã‡al / Durdur (â‡§ = ÅŸarkÄ± yÃ¼kle) | Q | Y |
+| Hot cue 1–4 (⇧ = sil) | 1 2 3 4 | 7 8 9 0 |
+| Çal / Durdur (⇧ = şarkı yükle) | Q | Y |
 | CUE | W | U |
-| SYNC (â‡§ = Key Lock) | E | I |
-| Loop aÃ§/kapat | R | O |
-| Loop Ã—2 (â‡§ = Â½) | T | P |
-| Tempo âˆ’ / + (â‡§ = kanal fader) | A / S | H / J |
-| Pitch bend âˆ’ / + (â‡§ = filtre) | D / F | K / L |
-| Tempo sÄ±fÄ±rla (â‡§ = filtre ortala) | G | Å |
-| LOW / MID / HI kill (â‡§Z = EQ sÄ±fÄ±rla, â‡§X/â‡§C = echo seviyesi) | Z / X / C | N / M / Ã– |
-| ECHO | V | Ã‡ |
+| SYNC (⇧ = Key Lock) | E | I |
+| Loop aç/kapat | R | O |
+| Loop ×2 (⇧ = ½) | T | P |
+| Tempo − / + (⇧ = kanal fader) | A / S | H / J |
+| Pitch bend − / + (⇧ = filtre) | D / F | K / L |
+| Tempo sıfırla (⇧ = filtre ortala) | G | Ş |
+| LOW / MID / HI kill (⇧Z = EQ sıfırla, ⇧X/⇧C = echo seviyesi) | Z / X / C | N / M / Ö |
+| ECHO | V | Ç |
 
-Genel: `â†` `â†’` `â†“` crossfader Â· `PgUp` / `PgDn` master Â· `Esc` / `F1` yardÄ±m.
-Mouse: deck Ã¼zerinde tekerlek = tempo, bir kontrolÃ¼n Ã¼zerinde tekerlek = o kontrol, Ã§ift tÄ±k = sÄ±fÄ±rla.
+Genel: `←` `→` `↓` crossfader · `PgUp` / `PgDn` master · `Esc` / `F1` yardım.
+Mouse: deck üzerinde tekerlek = tempo, bir kontrolün üzerinde tekerlek = o kontrol, çift tık = sıfırla.
 
 ## Teknik notlar
-- ArayÃ¼z Svelte 5 ile (listeler, akademi ve ayar ekranlarÄ± az kodla ve kÃ¼Ã§Ã¼k paketle yazÄ±labilsin diye); ses motoru ve dalga formu Ã§izimi Svelte'ten baÄŸÄ±msÄ±z, dÃ¼z TypeScript.
-- Demo ve test sesleri kodla Ã¼retilir; projede telifli mÃ¼zik yoktur.
+- Arayüz Svelte 5 ile (listeler, akademi ve ayar ekranları az kodla ve küçük paketle yazılabilsin diye); ses motoru ve dalga formu çizimi Svelte'ten bağımsız, düz TypeScript.
+- Demo ve test sesleri kodla üretilir; projede telifli müzik yoktur.
