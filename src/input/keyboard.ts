@@ -8,7 +8,12 @@ export type Bind = [action: string, keyA: string, keyB: string, shift: 0 | 1, la
 
 export const BIND: Bind[] = [
   ['play', 'KeyQ', 'KeyY', 0, 'Çal / Durdur'], ['load', 'KeyQ', 'KeyY', 1, 'Şarkı yükle'],
-  ['cue', 'KeyW', 'KeyU', 0, 'CUE (dururken koy, çalarken dön)'],
+  ['cue', 'KeyW', 'KeyU', 0, 'CUE (dururken koy · çalarken dön · cue üstünde basılı tut = dinle)', 'h'],
+  ['brake', 'KeyW', 'KeyU', 1, 'BRAKE (plak gibi yavaşça dur)'],
+  ['vinyl', 'KeyR', 'KeyO', 1, 'VINYL modu (jog ile scratch)'],
+  ['reverse', 'Tab', 'BracketLeft', 0, 'REV (ters çal)'], ['slip', 'Tab', 'BracketLeft', 1, 'SLIP modu'],
+  ['censor', 'IntlBackslash', 'Slash', 0, 'CENSOR (basılı tut)', 'h'], ['spinback', 'IntlBackslash', 'Slash', 1, 'SPIN (geri savurup dur)'],
+  ['jumpFwd', 'Digit5', 'Digit6', 0, 'Beat jump ileri (loop boyu kadar)'], ['jumpBack', 'Digit5', 'Digit6', 1, 'Beat jump geri'],
   ['sync', 'KeyE', 'KeyI', 0, 'SYNC (diğer deck\'in BPM\'ine eşitle)'], ['keylock', 'KeyE', 'KeyI', 1, 'Key Lock'],
   ['loop', 'KeyR', 'KeyO', 0, 'Loop aç / kapat'], ['loopDouble', 'KeyT', 'KeyP', 0, 'Loop ×2'], ['loopHalf', 'KeyT', 'KeyP', 1, 'Loop ½'],
   ['tempoDown', 'KeyA', 'KeyH', 0, 'Tempo −', 'r'], ['tempoUp', 'KeyS', 'KeyJ', 0, 'Tempo +', 'r'],
@@ -51,8 +56,6 @@ export function buildKeymap(): Record<string, KEntry> {
   return K;
 }
 
-const BEND: Record<string, number> = { bendDown: -0.04, bendUp: 0.04 };
-
 export function setupKeyboard(decks: Deck[], global: Record<string, (e: KeyboardEvent) => void>): void {
   const KMAP = buildKeymap();
 
@@ -73,12 +76,12 @@ export function setupKeyboard(decks: Deck[], global: Record<string, (e: Keyboard
     e.preventDefault(); ensureCtx();
     if (e.repeat && m.mode !== 'r') return;
     const d = decks[m.d];
-    if (m.mode === 'h') d.setBend(BEND[m.a]); else d.act(m.a, m.arg);
+    if (m.mode === 'h') d.hold(m.a, true); else d.act(m.a, m.arg);
   });
 
   document.addEventListener('keyup', e => {
     const m = KMAP[e.code];
-    if (m && m.mode === 'h') decks[m.d].setBend(0);
+    if (m && m.mode === 'h') decks[m.d].hold(m.a, false);
     if (e.key === 'Shift') decks.forEach(d => { if (d.bend) d.setBend(0); });
   });
 }

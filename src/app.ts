@@ -1,7 +1,7 @@
-import { $ } from './util';
+import { $, setText } from './util';
 import { Knob, Fader } from './ui/controls';
 import { Deck } from './engine/deck';
-import { engine, onCtxCreated } from './engine/context';
+import { engine, onCtxCreated, ramp } from './engine/context';
 import { Mixer } from './engine/mixer';
 import { setupKeyboard } from './input/keyboard';
 import { setupBadges } from './ui/badges';
@@ -16,7 +16,7 @@ export function initApp(): void {
 
   const masterK = new Knob($('#masterK'), {
     min: 0, max: 1, def: 0.85,
-    onchange: v => { if (engine.master) engine.master.gain.value = v; },
+    onchange: v => { if (engine.master) ramp(engine.master.gain, v); },
   });
   $('#masterK').dataset.a = 'master';
 
@@ -41,7 +41,15 @@ export function initApp(): void {
   addEventListener('resize', resize);
   resize();
 
-  const loop = (now: number) => { decks.forEach(d => d.frame(now)); requestAnimationFrame(loop); };
+  const led = $('#limLed'), grBar = $('#grBar'), grTxt = $('#grTxt');
+  const meter = (now: number) => {
+    const m = engine.meter, active = !!engine.limiter;
+    const grDb = active ? -20 * Math.log10(m.gr) : 0;
+    led.className = !active ? '' : now - m.overAt < 1500 ? 'over' : now - m.limitAt < 400 ? 'limit' : 'ok';
+    grBar.style.width = Math.min(100, grDb / 12 * 100) + '%';
+    setText(grTxt, (grDb > 0.05 ? '-' : '') + grDb.toFixed(1) + ' dB');
+  };
+  const loop = (now: number) => { decks.forEach(d => d.frame(now)); meter(now); requestAnimationFrame(loop); };
   requestAnimationFrame(loop);
 
   setupKeyboard(decks, {

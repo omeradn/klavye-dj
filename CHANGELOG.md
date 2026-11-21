@@ -2,7 +2,7 @@
 
 ## Yol haritası (onaylanan sıra)
 0. Kurulum ve taşıma ✅
-1. Ses motoru (AudioWorklet, kulaklık cue, limiter)
+1. Ses motoru — 1a ✅ (worklet, limiter, demo) · 1b key lock · 1c kulaklık cue
 2. Analiz ve kütüphane (beatgrid, gerçek SYNC, ton, Türk ritimleri, IndexedDB)
 3. Akademi (dersler, beatmatch antrenörü, geçiş sınavı)
 4. Restoran Modu, set kaydı, canlı koç, geçiş asistanı
@@ -10,6 +10,29 @@
 6. MIDI ve tuş değiştirme
 7. Reels çıktısı, hayalet mod, set planlayıcı
 8. Cila ve yayın
+
+## 0.2.0 — Faz 1a · Yeni ses motoru (2026-11-21)
+Faz 1 üç ara durağa bölündü: **1a** ses motoru · **1b** key lock + ton kaydırma · **1c** kulaklık cue + gecikme ayarı.
+
+### Eklendi
+- AudioWorklet deck motoru: şarkı ayrı bir ses iş parçacığında, örnek hassasiyetinde çalınıyor.
+  - Loop'lar örnek hassasiyetinde ve her atlama (loop dönüşü, sarma, beat jump) 5 ms çapraz geçişle → tık sesi yok. Sekme arka plandayken de loop çalışmaya devam ediyor.
+  - REV (ters çal), SLIP modu, CENSOR (basılı tut), BRAKE (plak gibi yavaşlayıp durma), SPIN (geri savurma).
+  - VINYL modu: jog'un iç kısmı plak gibi scratch yapıyor; dış halka tempo dürtme.
+  - Beat jump ileri/geri (loop boyu kadar; açık loop da birlikte kayar).
+  - CUE artık CDJ gibi: cue noktasındayken basılı tutunca çalar, bırakınca geri döner; CUE basılıyken PLAY = çalmaya devam.
+- Master limiter (-1 dBFS tavan, 3 ms ileri bakış): ses asla clip olmaz. Üst çubukta LİMİT göstergesi (yeşil/sarı/kırmızı) ve kısma miktarı.
+- DEMO butonu: kodla üretilmiş 4 demo parça (122/126/112/128 BPM, intro-build-drop-break-drop-outro, 8 barlık phrase yapısı).
+- Çalan deck'e yanlışlıkla şarkı yüklemeye karşı onay sorusu.
+- Testler: loop/sarma/beat jump'ta tık olmadığını, slip dönüşünü, freni ve limiter tavanını ölçen ses motoru testleri; demo parçaların BPM testi (toplam 20 test).
+- Tek dosya sürümde ses motoru da gömülü (gerçekten tek dosya).
+
+### Değişti
+- Tüm ses ayarları (EQ, kill, fader, filtre, crossfader, master) yumuşak geçişle değişiyor → çıt sesi yok.
+- ECHO artık crossfader'dan sonra: crossfader'ı çekince yankı kuyruğu kesilmeden söner ("echo out").
+
+### Geçici olarak eksik
+- Key lock: yeni motora Faz 1b'de ekleniyor (şu an tempo değişince ton da değişir).
 
 ## 0.1.0 — Faz 0 · Kurulum ve taşıma (2026-11-21)
 ### Eklendi

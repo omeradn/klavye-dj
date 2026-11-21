@@ -19,7 +19,10 @@ export function toast(m: string): void {
 }
 
 /** Physical key code -> label printed on a Turkish Q keyboard. */
-const TR: Record<string, string> = { Semicolon: 'Ş', Comma: 'Ö', Period: 'Ç' };
+const TR: Record<string, string> = {
+  Semicolon: 'Ş', Comma: 'Ö', Period: 'Ç', Slash: '.', BracketLeft: 'Ğ', BracketRight: 'Ü', Quote: 'İ',
+  IntlBackslash: '<', Backquote: '"',
+};
 export const keyLabel = (c: string): string => TR[c] || c.replace(/^Key|^Digit/, '');
 
 /** Only touch the DOM when the text actually changed (cheap per-frame updates). */

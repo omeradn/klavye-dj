@@ -2,7 +2,7 @@
 
 Tarayıcıda çalışan, klavye ve mouse ile kontrol edilen DJ uygulaması. Hedef: profesyonel bir DJ yazılımı + DJ'liği adım adım öğreten bir akademi + restoran setleri için özel modlar.
 
-> Durum: **Faz 0 tamam** — eski tek dosyalık sürüm (klavye-dj.html) Vite + TypeScript + Svelte projesine taşındı. Yol haritası için [CHANGELOG.md](CHANGELOG.md).
+> Durum: **Faz 1a tamam** — yeni ses motoru (AudioWorklet), master limiter, demo parçalar. Yol haritası için [CHANGELOG.md](CHANGELOG.md).
 
 ## Gerekenler
 - Windows'ta **Node.js 20 veya üstü** (kontrol: `node -v`)
@@ -46,7 +46,9 @@ Durdurmak için terminalde `Ctrl + C`.
 ```
 src/
   engine/    ses motoru: deck, mikser, AudioContext
+    worklets/  ses işleme çekirdeği (deck çalıcı, limiter) — ayrı ses iş parçacığında çalışır
   analysis/  BPM tespiti, dalga formu (ileride: beatgrid, ton)
+  demo/      kodla üretilen demo parçalar (telifsiz)
   input/     klavye haritası (ileride: MIDI, gamepad)
   ui/        knob/fader kontrolleri, tuş etiketleri, yardım penceresi
   App.svelte ekran düzeni
@@ -54,25 +56,29 @@ src/
 tests/       Vitest testleri (sentetik, telifsiz test sesleriyle)
 legacy/      ilk tek dosyalık sürüm (referans için)
 ```
-İleride eklenecek klasörler: `library`, `academy`, `coach`, `demo`.
+İleride eklenecek klasörler: `library`, `academy`, `coach`.
 
 ## Klavye düzeni (Türkçe Q)
 | Kontrol | Deck A | Deck B |
 |---|---|---|
 | Hot cue 1–4 (⇧ = sil) | 1 2 3 4 | 7 8 9 0 |
 | Çal / Durdur (⇧ = şarkı yükle) | Q | Y |
-| CUE | W | U |
+| CUE — basılı tut = dinle (⇧ = BRAKE) | W | U |
 | SYNC (⇧ = Key Lock) | E | I |
-| Loop aç/kapat | R | O |
+| Loop aç/kapat (⇧ = VINYL modu) | R | O |
 | Loop ×2 (⇧ = ½) | T | P |
 | Tempo − / + (⇧ = kanal fader) | A / S | H / J |
 | Pitch bend − / + (⇧ = filtre) | D / F | K / L |
 | Tempo sıfırla (⇧ = filtre ortala) | G | Ş |
 | LOW / MID / HI kill (⇧Z = EQ sıfırla, ⇧X/⇧C = echo seviyesi) | Z / X / C | N / M / Ö |
 | ECHO | V | Ç |
+| REV — ters çal (⇧ = SLIP modu) | Tab | Ğ |
+| CENSOR — basılı tut (⇧ = SPIN) | < | . |
+| Beat jump ileri (⇧ = geri) | 5 | 6 |
 
 Genel: `←` `→` `↓` crossfader · `PgUp` / `PgDn` master · `Esc` / `F1` yardım.
 Mouse: deck üzerinde tekerlek = tempo, bir kontrolün üzerinde tekerlek = o kontrol, çift tık = sıfırla.
+Jog: VINYL açıkken iç kısmı tutup çevirmek = scratch; dış halka = tempo dürtme (çalarken) / ileri-geri sarma (dururken).
 
 ## Teknik notlar
 - Arayüz Svelte 5 ile (listeler, akademi ve ayar ekranları az kodla ve küçük paketle yazılabilsin diye); ses motoru ve dalga formu çizimi Svelte'ten bağımsız, düz TypeScript.

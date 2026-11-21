@@ -21,6 +21,9 @@ export function setupBadges(decks: Deck[]): void {
     badge(q('keylock'), kk('keylock', 1)); badge(q('loop'), kk('loop', 0)); badge(q('loopDouble'), kk('loopDouble', 0)); badge(q('loopHalf'), kk('loopHalf', 1));
     badge(q('tempoReset'), kk('tempoReset', 0)); badge(q('bendDown'), kk('bendDown', 0)); badge(q('bendUp'), kk('bendUp', 0));
     badge(q('tempo'), kk('tempoDown', 0) + '/' + kk('tempoUp', 0));
+    badge(q('jumpFwd'), kk('jumpFwd', 0)); badge(q('jumpBack'), kk('jumpBack', 1));
+    badge(q('vinyl'), kk('vinyl', 1)); badge(q('slip'), kk('slip', 1)); badge(q('reverse'), kk('reverse', 0));
+    badge(q('censor'), kk('censor', 0)); badge(q('brake'), kk('brake', 1)); badge(q('spinback'), kk('spinback', 1));
     badge(q('jog'), '🖱 çevir');
     for (let n = 0; n < 4; n++) badge(q('hot' + (n + 1)), keyLabel(HOT_KEYS[i][n]));
     const cq = (a: string) => d.ch.querySelector(`[data-a="${a}"]`);

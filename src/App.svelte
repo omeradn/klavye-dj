@@ -9,6 +9,9 @@
   <div class="logo">KLAVYE <b>D</b><i>J</i></div>
   <span class="note">Şarkıyı deck'e veya dalga formuna sürükle · Tekerlek: deck üstünde tempo, düğme/fader üstünde o kontrol</span>
   <div class="sp"></div>
+  <div class="lim" title="Master limiter: ses asla -1 dBFS'yi aşmaz. Sarı = limiter çalışıyor, kırmızı = limiter olmasa clip olacaktı (ses çok yüksek, TRIM/kanal/master'ı kıs)">
+    <i id="limLed"></i><span>LİMİT</span><div class="grm"><i id="grBar"></i></div><span id="grTxt">0.0 dB</span>
+  </div>
   <div class="mwrap">MASTER <div class="kwrap" id="masterK"></div></div>
   <button class="hbtn" id="keysBtn">Tuş etiketleri</button>
   <button class="hbtn" id="helpBtn">Kısayollar <kbd>Esc</kbd></button>

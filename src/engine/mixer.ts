@@ -1,4 +1,5 @@
 import type { Deck } from './deck';
+import { ramp } from './context';
 
 /** Crossfader (equal-power curve). */
 export class Mixer {
@@ -13,8 +14,8 @@ export class Mixer {
     const x = (this.xfVal + 1) / 2;
     const [a, b] = this.decks;
     if (a.xfG && b.xfG) {
-      a.xfG.gain.value = Math.cos(x * Math.PI / 2);
-      b.xfG.gain.value = Math.sin(x * Math.PI / 2);
+      ramp(a.xfG.gain, Math.cos(x * Math.PI / 2), 0.005);
+      ramp(b.xfG.gain, Math.sin(x * Math.PI / 2), 0.005);
     }
   }
 }
