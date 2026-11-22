@@ -12,6 +12,11 @@ export type DeckIn =
   | { t: 'censor'; on: boolean }
   | { t: 'scratch'; on: boolean; rate: number }
   | { t: 'vinyl'; fx: 'brake' | 'spin'; dur: number }
+  /**
+   * Roll / slicer: a temporary loop that always slips (on release the song continues where it would have been).
+   * jump = start playing at `s` right away (slicer); otherwise the loop starts where the playhead already is.
+   */
+  | { t: 'roll'; on: boolean; s: number; e: number; jump?: boolean }
   /** lookahead = pitch-shifter latency in output samples; wet = use the pitch-corrected signal when possible */
   | { t: 'keylock'; lookahead: number; wet: boolean };
 

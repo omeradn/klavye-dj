@@ -2,6 +2,8 @@ import { $, clamp, fmt, toast, setText } from '../util';
 import { Knob, Fader } from '../ui/controls';
 import { engine, ensureCtx, ramp } from './context';
 import { phonesAudible } from './output';
+import { JUMP_BEATS, KEY_SEMIS, LOOP_BEATS, PAD_MODES, padLabel, ROLL_BEATS, sliceBase, type PadMode } from './padmodes';
+import { loadUserSample, playSample, resetSample, sampler } from './sampler';
 import { detectBPM } from '../analysis/bpm';
 import {
   analyzeGrid, barPos, downbeatAt, lineKind, METER_ORDER, METERS, phaseAt, pulseLen, setBpmAt, snap, wrapHalf, type Grid,
@@ -63,7 +65,13 @@ export class Deck {
 
   tempo = 0; bend = 0; jogBend = 0; jogStamp = 0;
   cuePt = 0; cuePreview = false;
-  hot: (number | null)[] = [null, null, null, null];
+  hot: (number | null)[] = Array(8).fill(null);
+  /** performance pad mode */
+  padMode: PadMode = 'hot';
+  /** pads held down right now (roll / slicer act while held) */
+  private padsHeld = new Set<number>();
+  private sliceStart = 0;
+  private rollPad = -1;
   bpm: number | null = null;
   /** beatgrid (null = unknown); `bpm` mirrors grid.bpm */
   grid: Grid | null = null;
@@ -215,9 +223,11 @@ export class Deck {
         <button class="b sm mtr" data-a="meter" title="Ölçü: 4/4 · 6/8 · 7/8 aksak · 9/8 aksak · 10/8 aksak. Aksak ölçülerde BPM = sekizlik vuruş sayısı">4/4</button>
         <button class="b sm" data-a="quantize" title="QUANTIZE: cue, hot cue ve loop en yakın vuruşa oturur; hot cue'ya atlarken ritim kaymaz">QUANT</button>
       </div>
+      <div class="pmodes" data-a="padMode">
+        ${PAD_MODES.map(m => `<button class="pm" data-m="${m.id}" title="${m.help}">${m.label}</button>`).join('')}
+      </div>
       <div class="pads">
-        ${[1, 2, 3, 4].map(n => `<button class="pad hc" data-a="hot${n}">HOT CUE ${n}</button>`).join('')}
-        ${[1, 2, 4, 8].map(n => `<button class="pad lp" data-a="bl${n}">LOOP ${n}</button>`).join('')}
+        ${[0, 1, 2, 3, 4, 5, 6, 7].map(i => `<button class="pad" data-a="pad${i}"><span>HOT CUE ${i + 1}</span></button>`).join('')}
       </div>
       <div class="transport">
         <button class="round cue" data-a="cue">CUE</button>
@@ -229,6 +239,7 @@ export class Deck {
     const q = (a: string) => this.q(a);
     const sel = (s: string) => this.el.querySelector<HTMLElement>(s)!;
     this.ui = {
+      pmodes: sel('.pmodes'),
       title: sel('.dtitle'), bpm: sel('.dbpm'), rem: sel('.rem'), tp: sel('.tp'), kl: sel('.kl'), lp: sel('.lp'), key: sel('.key'),
       jt: sel('.jt'), jr: sel('.jr'), platter: sel('.platter'), ksv: sel('.ksv'), bars: sel('.bars'), leds: sel('.leds'),
       mtr: sel('.mtr'),
@@ -253,8 +264,23 @@ export class Deck {
       'tempoReset', 'vinyl', 'slip', 'reverse', 'brake', 'spinback', 'keyUp', 'keyDown', 'keyReset']) click(a, () => this.act(a));
     for (const a of ['gridLeft', 'gridRight', 'downbeat', 'bpmDown', 'bpmUp', 'meter', 'quantize']) click(a, e => this.gridAct(a, e.shiftKey));
     this.ui.bars.onclick = () => { this.phraseBars = this.phraseBars >= 32 ? 4 : this.phraseBars * 2; toast(`Phrase: ${this.phraseBars} bar`); };
-    [1, 2, 3, 4].forEach((n, i) => click('hot' + n, e => this.act(e.shiftKey ? 'hotDel' : 'hot', i)));
-    [1, 2, 4, 8].forEach(n => click('bl' + n, () => this.beatLoop(n)));
+    // pad modes and pads (pointer: press/release so ROLL and SLICER work while held)
+    this.el.querySelector<HTMLElement>('.pmodes')!.addEventListener('click', e => {
+      const m = (e.target as HTMLElement).closest<HTMLElement>('[data-m]')?.dataset.m as PadMode | undefined;
+      if (m) this.setPadMode(m);
+    });
+    for (let i = 0; i < 8; i++) {
+      const b = q('pad' + i);
+      let down = false;
+      b.onpointerdown = e => {
+        if (e.button === 2) return;
+        e.preventDefault(); ensureCtx();
+        if (e.shiftKey) { this.padAlt(i); return; }
+        down = true; this.pad(i, true);
+      };
+      b.onpointerup = b.onpointerleave = b.onpointercancel = () => { if (down) { down = false; this.pad(i, false); } };
+      b.oncontextmenu = e => { e.preventDefault(); ensureCtx(); this.padAlt(i); };
+    }
 
     // press-and-hold buttons
     for (const a of ['cue', 'censor', 'bendDown', 'bendUp']) {
@@ -480,7 +506,7 @@ export class Deck {
     const meta = await loadMeta(sig);
     this.len = L.length; this.sr = sr; this.title = name; this.sig = '';
     Object.assign(this, { pos: 0, posAt: 0, playing: false, audible: false, cuePt: meta?.cue ?? 0, cuePreview: false,
-      hot: meta?.hot ? [...meta.hot] : [null, null, null, null], loopOn: false, reverse: false, censor: false, ovImg: null, syncOn: false, syncBend: 0 });
+      hot: Array.from({ length: 8 }, (_, i) => meta?.hot?.[i] ?? null), loopOn: false, reverse: false, censor: false, ovImg: null, syncOn: false, syncBend: 0 });
     this.setGrid(meta?.grid ?? grid, false);
     this.logged = false;
     this.sig = sig;
@@ -623,6 +649,113 @@ export class Deck {
     for (let i = 0; i < b.beatsInBar; i++) ui.leds.children[i].classList.toggle('on', i === b.beat);
   }
 
+  /* ---------- performance pads ---------- */
+
+  setPadMode(m: PadMode): void {
+    this.releasePads();
+    this.padMode = m;
+    toast(`Deck ${this.id} pad: ${PAD_MODES.find(x => x.id === m)!.label} — ${PAD_MODES.find(x => x.id === m)!.help}`);
+  }
+
+  cyclePadMode(dir: number): void {
+    const i = PAD_MODES.findIndex(m => m.id === this.padMode);
+    this.setPadMode(PAD_MODES[(i + dir + PAD_MODES.length) % PAD_MODES.length].id);
+  }
+
+  private releasePads(): void {
+    for (const i of [...this.padsHeld]) this.pad(i, false);
+  }
+
+  /** A pad was pressed (down = true) or released. */
+  pad(i: number, down: boolean): void {
+    if (down) this.padsHeld.add(i); else this.padsHeld.delete(i);
+    const m = this.padMode, has = this.has;
+    if (m === 'roll' || m === 'slicer') { this.padHold(i, down); return; }
+    if (!down) return;
+    switch (m) {
+      case 'hot': this.act('hot', i); break;
+      case 'loop': if (has) this.beatLoop(LOOP_BEATS[i]); break;
+      case 'jump': if (has) this.jumpBeats(JUMP_BEATS[i]); break;
+      case 'sampler': playSample(i); break;
+      case 'key': if (has) { this.keyShift = KEY_SEMIS[i]; this.updateKeylock(); } break;
+    }
+  }
+
+  /** Second function (⇧+click, right click, Backspace+key): delete hot cue / load own sampler sound. */
+  padAlt(i: number): void {
+    if (this.padMode === 'hot') { if (this.hot[i] != null) { this.act('hotDel', i); toast(`Hot cue ${i + 1} silindi`); } return; }
+    if (this.padMode !== 'sampler') return;
+    if (sampler.slots[i].user && confirm(`Sampler ${i + 1}: kendi sesin "${sampler.slots[i].name}" silinip yerleşik sese dönülsün mü?`)) { void resetSample(i); return; }
+    const inp = document.createElement('input');
+    inp.type = 'file'; inp.accept = 'audio/*';
+    inp.onchange = () => { if (inp.files?.[0]) void loadUserSample(i, inp.files[0]); };
+    inp.click();
+  }
+
+  /** ROLL / SLICER: a slipping loop while the pad is held; the newest held pad wins. */
+  private padHold(i: number, down: boolean): void {
+    if (!this.has || !this.playing) { if (!down && this.rollPad === i) this.rollOff(); return; }
+    if (!down) {
+      if (this.rollPad !== i) return;
+      const last = [...this.padsHeld].pop();
+      if (last == null) { this.rollOff(); return; }
+      i = last;   // another pad is still held: continue with it
+    }
+    const t = this.currentTime(), g = this.grid, pl = this.beatLen();
+    if (this.padMode === 'roll') {
+      const len = ROLL_BEATS[i] * pl;
+      // start on the grid, so the repeats land on the beat
+      const s = g ? g.offset + Math.floor((t - g.offset) / len) * len : t;
+      this.post({ t: 'roll', on: true, s: s * this.sr, e: (s + len) * this.sr });
+    } else {
+      if (this.rollPad < 0) this.sliceStart = this.sliceWindow(t);
+      const s = this.sliceStart + i * pl;
+      this.post({ t: 'roll', on: true, s: s * this.sr, e: (s + pl) * this.sr, jump: true });
+    }
+    this.rollPad = i;
+  }
+
+  private rollOff(): void {
+    this.rollPad = -1;
+    this.post({ t: 'roll', on: false, s: 0, e: 0 });
+  }
+
+  /** Start time of the 8-beat slicer window around t. */
+  private sliceWindow(t: number): number {
+    const g = this.grid, pl = this.beatLen();
+    if (!g) return Math.floor(t / (8 * pl)) * 8 * pl;
+    return g.offset + sliceBase(Math.floor((t - g.offset) / pl + 1e-6)) * pl;
+  }
+
+  /** Jump by a number of beats (an active loop moves along). */
+  jumpBeats(beats: number): void {
+    if (!this.has) return;
+    const d = beats * this.beatLen();
+    if (this.loopOn) { this.loopS += d; this.loopE += d; }
+    this.pos = clamp(this.pos + d * this.sr, 0, this.len - 1);
+    this.post({ t: 'jump', d: d * this.sr });
+  }
+
+  /** Pad labels and lights for the current mode. */
+  private drawPads(t: number): void {
+    const m = this.padMode;
+    this.ui.pmodes.querySelectorAll<HTMLElement>('[data-m]').forEach(b => b.classList.toggle('on', b.dataset.m === m));
+    const slice = m === 'slicer' && this.has ? Math.floor((t - this.sliceWindow(t)) / this.beatLen()) : -1;
+    for (let i = 0; i < 8; i++) {
+      const b = this.q('pad' + i), span = b.firstElementChild as HTMLElement;
+      setText(span, padLabel(m, i, { sample: sampler.slots[i].name }));
+      let cls = 'pad m-' + m;
+      if (m === 'hot' && this.hot[i] != null) cls += ' set';
+      if (m === 'loop' && this.loopOn && this.loopBeats === LOOP_BEATS[i]) cls += ' on';
+      if ((m === 'roll' || m === 'slicer') && this.rollPad === i) cls += ' on';
+      if (m === 'slicer' && slice === i && this.rollPad < 0 && this.playing) cls += ' cur';
+      if (m === 'sampler') { if (sampler.voices.has(i)) cls += ' on'; if (sampler.slots[i].user) cls += ' user'; }
+      if (m === 'key' && this.keyShift === KEY_SEMIS[i] && (KEY_SEMIS[i] !== 0 || this.has)) cls += ' on';
+      if (this.padsHeld.has(i)) cls += ' held';
+      if (b.className !== cls) b.className = cls;
+    }
+  }
+
   /* ---------- actions ---------- */
   private setPlaying(on: boolean): void {
     if (on && !this.logged && this.sig) { this.logged = true; this.onPlayed?.(this.sig, this.title); }
@@ -655,6 +788,8 @@ export class Deck {
       case 'loopHalf': this.resizeLoop(0.5); break;
       case 'loopDouble': this.resizeLoop(2); break;
       case 'jumpFwd': case 'jumpBack': this.beatJump(a === 'jumpFwd' ? 1 : -1); break;
+      case 'padModeNext': this.cyclePadMode(1); break;
+      case 'padModePrev': this.cyclePadMode(-1); break;
       case 'load': this.file.click(); break;
       case 'demo': void this.loadDemo(); break;
       case 'tempoDown': this.tempoF.nudge(-1); break;
@@ -841,8 +976,7 @@ export class Deck {
     this.q('reverse').classList.toggle('on', this.reverse);
     this.q('censor').classList.toggle('on', this.censor);
     this.pflBtn.classList.toggle('on', this.pfl);
-    this.hot.forEach((h, i) => this.q('hot' + (i + 1)).classList.toggle('set', h != null));
-    [1, 2, 4, 8].forEach(n => this.q('bl' + n).classList.toggle('on', this.loopOn && this.loopBeats === n));
+    this.drawPads(t);
 
     // VU
     if (this.an) {

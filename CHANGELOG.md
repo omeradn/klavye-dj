@@ -6,10 +6,29 @@
 2. Analiz ve kütüphane ✅ — 2a kütüphane · 2b beatgrid + SYNC · 2c ton, renkli dalga formu, listeler
 3. Akademi (dersler, beatmatch antrenörü, geçiş sınavı)
 4. Restoran Modu, set kaydı, canlı koç, geçiş asistanı
-5. Gelişmiş FX ve pad modları
+5. Gelişmiş FX ve pad modları — öne alındı: 3a pad modları + sampler ✅ · 3b Ritim FX + Kanal FX · 3c mikser ekstraları
 6. MIDI ve tuş değiştirme
 7. Reels çıktısı, hayalet mod, set planlayıcı
 8. Cila ve yayın
+
+## 0.8.0 — Faz 3a · Performans pad'leri ve sampler (2026-11-22)
+### Eklendi
+- Her deck'te **8 pad** ve üstünde **7 pad modu**: HOT CUE · LOOP · JUMP · SLICER · ROLL · SAMPLER · TON.
+  - **HOT CUE**: 8 hot cue (eskiden 4). Şarkıyla birlikte saklanır.
+  - **LOOP**: ¼, ½, 1, 2, 4, 8, 16, 32 vuruşluk loop'lar.
+  - **JUMP**: ◀1 1▶ ◀4 4▶ / ◀16 16▶ ◀32 32▶ vuruş atlama.
+  - **SLICER**: çalan 8 vuruş 8 dilime bölünür; basılı tuttuğun dilim tekrar eder, bırakınca şarkı olması gereken yerden devam eder. Çalan dilim sarı yanar.
+  - **ROLL**: 1/16'dan 8 vuruşa kadar; basılı tuttukça tekrar eder ("trrrr"), bırakınca şarkı kaldığı yerden devam eder. Grid'e oturur.
+  - **SAMPLER**: 8 ses (iki deck'te aynı): Korna, Siren, Lazer, Yükseliş, Patlama, Alkış, Darbuka düm, Darbuka tek. Hepsi kodla üretildi (telifsiz). ⇧+tık ya da sağ tık ile o pad'e **kendi sesini** yüklersin (en fazla 30 sn, tarayıcıda saklanır); tekrar yapınca yerleşik sese döner. Üst çubukta **SAMPLER** ses düğmesi; sampler da master limiter'dan geçer.
+  - **TON**: +1 +2 +3 +4 / 0 −1 −2 −3 yarım ses.
+- Klavye: **1–4** üst sıra pad'ler, **⇧1–4** alt sıra (B: 7–0). **5** pad modunu değiştirir, **⇧5** geri (B: 6). **Backspace** basılıyken pad = hot cue sil / sampler'a ses yükle.
+- Ses motoru: "roll" loop'u (her zaman slip'li, normal loop'u bozmadan) ve slicer için atlayarak başlayan roll. Testlerle: tık sesi yok, bırakınca doğru yere dönüyor.
+- Pencere odak kaybedince basılı kalan tuşlar bırakılır (takılı roll/bend olmaz).
+
+### Değişti
+- **5 / 6** artık beat jump değil, pad modu değiştirir. Beat jump: deck'teki ◀◀ ▶▶ butonları ya da JUMP pad modu.
+- **⇧1–4** artık hot cue silmiyor, alt sıradaki pad'leri çalıyor. Silmek: Backspace + pad tuşu, ya da pad'e ⇧+tık / sağ tık.
+- Testler: toplam 63.
 
 ## 0.7.0 — Faz 2c · Ton, renkli dalga formu, listeler (2026-11-22)
 ### Eklendi

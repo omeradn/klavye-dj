@@ -78,6 +78,9 @@ class DeckProcessor extends AudioWorkletProcessor {
   private loopOn = false;
   private loopS = 0;
   private loopE = 0;
+  private rollOn = false;
+  private rollS = 0;
+  private rollE = 0;
   private gain = 0;
   private wasSlipping = false;
   private blocks = 0;
@@ -103,11 +106,16 @@ class DeckProcessor extends AudioWorkletProcessor {
     this.aheadOn = false;
   }
 
+  /** Active loop: a roll overrides the normal loop while it is held. */
+  private get lOn(): boolean { return this.rollOn || this.loopOn; }
+  private get lS(): number { return this.rollOn ? this.rollS : this.loopS; }
+  private get lE(): number { return this.rollOn ? this.rollE : this.loopE; }
+
   private wrapLoop(p: number): number {
-    if (!this.loopOn) return p;
-    const n = this.loopE - this.loopS;
-    if (n <= 0 || p < this.loopE) return p;
-    return this.loopS + ((p - this.loopS) % n);
+    if (!this.lOn) return p;
+    const s = this.lS, e = this.lE, n = e - s;
+    if (n <= 0 || p < e) return p;
+    return s + ((p - s) % n);
   }
 
   private onMsg(m: DeckIn): void {
@@ -128,6 +136,11 @@ class DeckProcessor extends AudioWorkletProcessor {
       case 'loop':
         this.loopOn = m.on;
         if (m.on) { this.loopS = m.s; this.loopE = m.e; }
+        this.aheadOn = false;
+        break;
+      case 'roll':
+        this.rollOn = m.on;
+        if (m.on) { this.rollS = m.s; this.rollE = m.e; if (m.jump) this.jump(m.s); }
         this.aheadOn = false;
         break;
       case 'reverse': this.reverse = m.on; break;
@@ -160,7 +173,8 @@ class DeckProcessor extends AudioWorkletProcessor {
       return true;
     }
 
-    const slipping = this.censor || (this.slip && (this.loopOn || this.reverse || this.scratching));
+    const slipping = this.censor || this.rollOn || (this.slip && (this.loopOn || this.reverse || this.scratching));
+    const lOn = this.lOn, lS = this.lS, lE = this.lE;
     if (this.wasSlipping && !slipping) this.jump(this.shadow);
     this.wasSlipping = slipping;
     const back = this.reverse || this.censor;
@@ -214,8 +228,8 @@ class DeckProcessor extends AudioWorkletProcessor {
         if (aR) aR[i] = ah.r * g;
         const prevA = ah.pos;
         ah.pos += rate;
-        if (this.loopOn) {
-          if (prevA < this.loopE && ah.pos >= this.loopE) ah.jump(this.loopS + (ah.pos - this.loopE), true);
+        if (lOn) {
+          if (prevA < lE && ah.pos >= lE) ah.jump(lS + (ah.pos - lE), true);
         } else {
           // keep the offset exact when the tempo changes
           // (main has not advanced yet this sample, the look-ahead head has)
@@ -240,9 +254,9 @@ class DeckProcessor extends AudioWorkletProcessor {
       if (slipping) { if (this.playing) this.shadow += this.tempo; }
       else this.shadow = main.pos;
 
-      if (this.loopOn) {
-        if (rate > 0 && prev < this.loopE && main.pos >= this.loopE) main.jump(this.loopS + (main.pos - this.loopE), this.gain > 0.001);
-        else if (rate < 0 && prev >= this.loopS && main.pos < this.loopS) this.jump(this.loopE - (this.loopS - main.pos));
+      if (lOn) {
+        if (rate > 0 && prev < lE && main.pos >= lE) main.jump(lS + (main.pos - lE), this.gain > 0.001);
+        else if (rate < 0 && prev >= lS && main.pos < lS) this.jump(lE - (lS - main.pos));
       }
       if (main.pos >= this.len - 1) { main.pos = this.len - 1; if (rate > 0) this.playing = false; }
       else if (main.pos < 0) main.pos = 0;

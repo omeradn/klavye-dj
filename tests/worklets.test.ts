@@ -118,6 +118,40 @@ describe('deck processor', () => {
     expect(Math.abs(end - (start + 303 * 128))).toBeLessThan(400);
   });
 
+  it('roll loops while held and then continues where the song would be (no slip needed)', () => {
+    const p = new registry.deck();
+    send(p, { t: 'load', L: sine(), R: sine() });
+    send(p, { t: 'play', on: true });
+    render(p, 30);
+    const start = p.port.sent.at(-1).pos, len = SR * 0.06;      // 1/8 beat at 125 BPM
+    send(p, { t: 'roll', on: true, s: start, e: start + len });
+    const out = render(p, 300);
+    const mid = p.port.sent.at(-1).pos;
+    expect(mid).toBeGreaterThanOrEqual(start - 1);
+    expect(mid).toBeLessThan(start + len + 1);
+    expect(maxStep(out, 10)).toBeLessThan(naturalStep * 1.6);
+    send(p, { t: 'roll', on: false, s: 0, e: 0 });
+    render(p, 3);
+    expect(Math.abs(p.port.sent.at(-1).pos - (start + 303 * 128))).toBeLessThan(400);
+  });
+
+  it('slicer jumps into a slice, repeats it, and returns on release', () => {
+    const p = new registry.deck();
+    send(p, { t: 'load', L: sine(), R: sine() });
+    send(p, { t: 'play', on: true });
+    render(p, 60);
+    const start = p.port.sent.at(-1).pos, s = SR * 4, e = s + SR * 0.24;
+    send(p, { t: 'roll', on: true, s, e, jump: true });
+    const out = render(p, 150);
+    const mid = p.port.sent.at(-1).pos;
+    expect(mid).toBeGreaterThanOrEqual(s - 1);
+    expect(mid).toBeLessThan(e + 1);
+    expect(maxStep(out)).toBeLessThan(naturalStep * 1.6);
+    send(p, { t: 'roll', on: false, s: 0, e: 0 });
+    render(p, 3);
+    expect(Math.abs(p.port.sent.at(-1).pos - (start + 153 * 128))).toBeLessThan(400);
+  });
+
   it('brake slows to a stop', () => {
     const p = new registry.deck();
     send(p, { t: 'load', L: sine(), R: sine() });

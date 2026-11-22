@@ -14,7 +14,8 @@ export const BIND: Bind[] = [
   ['reverse', 'Tab', 'BracketLeft', 0, 'REV (ters çal)'], ['slip', 'Tab', 'BracketLeft', 1, 'SLIP modu'],
   ['censor', 'IntlBackslash', 'Slash', 0, 'CENSOR (basılı tut)', 'h'], ['spinback', 'IntlBackslash', 'Slash', 1, 'SPIN (geri savurup dur)'],
   ['keyUp', 'Backquote', 'BracketRight', 0, 'Ton +1 yarım ses'], ['keyDown', 'Backquote', 'BracketRight', 1, 'Ton −1 yarım ses'],
-  ['jumpFwd', 'Digit5', 'Digit6', 0, 'Beat jump ileri (loop boyu kadar)'], ['jumpBack', 'Digit5', 'Digit6', 1, 'Beat jump geri'],
+  ['padModeNext', 'Digit5', 'Digit6', 0, 'Pad modu: sonraki (HOT CUE → LOOP → JUMP → SLICER → ROLL → SAMPLER → TON)'],
+  ['padModePrev', 'Digit5', 'Digit6', 1, 'Pad modu: önceki'],
   ['sync', 'KeyE', 'KeyI', 0, 'SYNC (tempo + vuruş kilidi · tekrar bas = kapat)'], ['keylock', 'KeyE', 'KeyI', 1, 'Key Lock'],
   ['loop', 'KeyR', 'KeyO', 0, 'Loop aç / kapat'], ['loopDouble', 'KeyT', 'KeyP', 0, 'Loop ×2'], ['loopHalf', 'KeyT', 'KeyP', 1, 'Loop ½'],
   ['tempoDown', 'KeyA', 'KeyH', 0, 'Tempo −', 'r'], ['tempoUp', 'KeyS', 'KeyJ', 0, 'Tempo +', 'r'],
@@ -27,9 +28,10 @@ export const BIND: Bind[] = [
   ['eqReset', 'KeyZ', 'KeyN', 1, 'EQ sıfırla'], ['fx', 'KeyV', 'Period', 0, 'ECHO aç / kapat'],
   ['pfl', 'KeyV', 'Period', 1, 'Kulaklık CUE (bu kanalı kulaklıkta dinle)'],
   ['fxDown', 'KeyX', 'KeyM', 1, 'ECHO seviye −', 'r'], ['fxUp', 'KeyC', 'Comma', 1, 'ECHO seviye +', 'r'],
-  ['hot0', 'Digit1', 'Digit7', 0, 'Hot cue 1 (boşsa kaydet)'], ['hot1', 'Digit2', 'Digit8', 0, 'Hot cue 2'],
-  ['hot2', 'Digit3', 'Digit9', 0, 'Hot cue 3'], ['hot3', 'Digit4', 'Digit0', 0, 'Hot cue 4'],
-  ['hotDel', 'Digit1', 'Digit7', 1, 'Hot cue sil (Shift + 1-4 / 7-0)'],
+  ['pad0', 'Digit1', 'Digit7', 0, 'Pad 1', 'h'], ['pad1', 'Digit2', 'Digit8', 0, 'Pad 2', 'h'],
+  ['pad2', 'Digit3', 'Digit9', 0, 'Pad 3', 'h'], ['pad3', 'Digit4', 'Digit0', 0, 'Pad 4', 'h'],
+  ['pad4', 'Digit1', 'Digit7', 1, 'Pad 5', 'h'], ['pad5', 'Digit2', 'Digit8', 1, 'Pad 6', 'h'],
+  ['pad6', 'Digit3', 'Digit9', 1, 'Pad 7', 'h'], ['pad7', 'Digit4', 'Digit0', 1, 'Pad 8', 'h'],
 ];
 
 export const HOT_KEYS = [['Digit1', 'Digit2', 'Digit3', 'Digit4'], ['Digit7', 'Digit8', 'Digit9', 'Digit0']];
@@ -41,15 +43,10 @@ export function buildKeymap(): Record<string, KEntry> {
   const K: Record<string, KEntry> = {};
   for (const [a, ka, kb, sh, , mode] of BIND) {
     const sfx = sh ? '+S' : '';
-    if (a === 'hotDel') {
-      for (let i = 0; i < 4; i++) {
-        K[HOT_KEYS[0][i] + '+S'] = { d: 0, a: 'hotDel', arg: i };
-        K[HOT_KEYS[1][i] + '+S'] = { d: 1, a: 'hotDel', arg: i };
-      }
-    } else if (a.startsWith('hot')) {
-      const i = +a[3];
-      K[ka + sfx] = { d: 0, a: 'hot', arg: i, mode };
-      K[kb + sfx] = { d: 1, a: 'hot', arg: i, mode };
+    if (a.startsWith('pad') && /\d$/.test(a)) {
+      const i = +a.slice(3);
+      K[ka + sfx] = { d: 0, a: 'pad', arg: i, mode };
+      K[kb + sfx] = { d: 1, a: 'pad', arg: i, mode };
     } else {
       K[ka + sfx] = { d: 0, a, mode };
       K[kb + sfx] = { d: 1, a, mode };
@@ -74,9 +71,24 @@ export function setupKeyboard(decks: Deck[], global: Record<string, (e: Keyboard
     if (b) setTimeout(() => b.blur(), 0);
   });
 
+  // keys held down: the release goes to whatever the key started (even if Shift changed meanwhile)
+  const held = new Map<string, KEntry>();
+  /** Backspace held = pads do their second function (delete hot cue / load own sampler sound) */
+  let alt = false;
+
+  const press = (m: KEntry, on: boolean) => {
+    const d = decks[m.d];
+    if (m.a === 'pad') {
+      if (on && alt) d.padAlt(m.arg!);
+      else if (on || !alt) d.pad(m.arg!, on);
+    } else if (m.mode === 'h') d.hold(m.a, on);
+    else if (on) d.act(m.a, m.arg);
+  };
+
   document.addEventListener('keydown', e => {
     if (e.ctrlKey || e.metaKey || e.altKey) return;
     if (isTyping(e.target)) return;   // typing in the library search box
+    if (e.code === 'Backspace') { alt = true; e.preventDefault(); return; }
     if ((e.code === 'Space' || e.code === 'Enter') && (e.target as Element)?.closest?.('button')) { e.preventDefault(); return; }
     if (global[e.code]) { e.preventDefault(); ensureCtx(); global[e.code](e); return; }
     // Shift + a key without a shift function falls back to its normal function
@@ -84,14 +96,16 @@ export function setupKeyboard(decks: Deck[], global: Record<string, (e: Keyboard
     if (!m) return;
     e.preventDefault(); ensureCtx();
     if (e.repeat && m.mode !== 'r') return;
-    const d = decks[m.d];
-    if (m.mode === 'h') d.hold(m.a, true); else d.act(m.a, m.arg);
+    if (m.mode === 'h') held.set(e.code, m);
+    press(m, true);
   });
 
   document.addEventListener('keyup', e => {
-    if (isTyping(e.target)) return;
-    const m = KMAP[e.code];
-    if (m && m.mode === 'h') decks[m.d].hold(m.a, false);
+    if (e.code === 'Backspace') { alt = false; return; }
+    const m = held.get(e.code);
+    if (m) { held.delete(e.code); press(m, false); }
     if (e.key === 'Shift') decks.forEach(d => { if (d.bend) d.setBend(0); });
   });
+  // window lost focus with keys down: release everything (no stuck rolls / bends)
+  addEventListener('blur', () => { for (const m of held.values()) press(m, false); held.clear(); alt = false; });
 }

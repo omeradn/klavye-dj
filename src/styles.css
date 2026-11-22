@@ -228,3 +228,22 @@ kbd{background:#000;border:1px solid #444b57;border-bottom-width:2px;border-radi
 #libSide li button{background:none;border:0;color:var(--mut);cursor:pointer;padding:0 3px}
 #libSide .note{font-size:11px}
 @media (max-width:700px){.lmain{grid-template-columns:1fr}}
+
+/* performance pads (Faz 3a) */
+.pmodes{position:relative;display:flex;gap:3px;margin-top:10px;flex-wrap:wrap}
+.pmodes .pm{flex:1;min-width:0;background:#16191d;border:1px solid #2f343d;border-radius:6px;color:var(--mut);font:600 9.5px system-ui,sans-serif;letter-spacing:.4px;padding:5px 2px;cursor:pointer;white-space:nowrap}
+.pmodes .pm.on{color:#0a0b0d;background:var(--amber);border-color:var(--amber)}
+.pmodes .k{right:-4px;top:-10px}
+.pads{margin-top:6px}
+.pad span{pointer-events:none;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 4px}
+.pad.held{transform:translateY(1px);filter:brightness(1.25)}
+.pad.m-hot.set{background:#2a2040;border-color:var(--violet);color:#e7dcff;box-shadow:inset 0 0 14px #b98bff44}
+.pad.m-loop.on{background:#1d3324;border-color:var(--green);color:var(--green)}
+.pad.m-jump{color:#9fd3ff}
+.pad.m-slicer.cur{border-color:var(--amber);color:var(--amber)}
+.pad.m-slicer.on,.pad.m-roll.on{background:#3a2a12;border-color:var(--amber);color:#ffe2a8;box-shadow:inset 0 0 14px #ffb02055}
+.pad.m-roll{color:#ffd28a}
+.pad.m-sampler{color:#ffb8a0}
+.pad.m-sampler.user{border-style:dashed}
+.pad.m-sampler.on{background:#3a1d14;border-color:#ff8a3d;color:#fff;box-shadow:inset 0 0 14px #ff8a3d66}
+.pad.m-key.on{background:#2a2040;border-color:var(--violet);color:#e7dcff}

@@ -2,7 +2,7 @@
 
 Tarayıcıda çalışan, klavye ve mouse ile kontrol edilen DJ uygulaması. Hedef: profesyonel bir DJ yazılımı + DJ'liği adım adım öğreten bir akademi + restoran setleri için özel modlar.
 
-> Durum: **Faz 2 tamam** — ses motoru, kulaklık cue, kütüphane (playlist, geçmiş, etiket), beatgrid, gerçek SYNC, quantize, Türk ritimleri, ton tespiti ve Ton Çarkı, 3 renkli dalga formu. Yol haritası için [CHANGELOG.md](CHANGELOG.md).
+> Durum: **Faz 3a tamam** (8 pad, 7 pad modu, sampler) · **Faz 2 tamam** — ses motoru, kulaklık cue, kütüphane (playlist, geçmiş, etiket), beatgrid, gerçek SYNC, quantize, Türk ritimleri, ton tespiti ve Ton Çarkı, 3 renkli dalga formu. Yol haritası için [CHANGELOG.md](CHANGELOG.md).
 
 ## Gerekenler
 - Windows'ta **Node.js 20 veya üstü** (kontrol: `node -v`)
@@ -61,7 +61,9 @@ legacy/      ilk tek dosyalık sürüm (referans için)
 ## Klavye düzeni (Türkçe Q)
 | Kontrol | Deck A | Deck B |
 |---|---|---|
-| Hot cue 1–4 (⇧ = sil) | 1 2 3 4 | 7 8 9 0 |
+| Pad 1–4 (üst sıra) · ⇧ = pad 5–8 (alt sıra) | 1 2 3 4 | 7 8 9 0 |
+| Pad modu: sonraki (⇧ = önceki) | 5 | 6 |
+| Hot cue sil / sampler'a kendi sesini yükle | Backspace + pad | Backspace + pad |
 | Çal / Durdur (⇧ = şarkı yükle) | Q | Y |
 | CUE — basılı tut = dinle (⇧ = BRAKE) | W | U |
 | SYNC — tempo + vuruş kilidi, tekrar bas = kapat (⇧ = Key Lock) | E | I |
@@ -74,7 +76,6 @@ legacy/      ilk tek dosyalık sürüm (referans için)
 | ECHO | V | Ç |
 | REV — ters çal (⇧ = SLIP modu) | Tab | Ğ |
 | CENSOR — basılı tut (⇧ = SPIN) | < | . |
-| Beat jump ileri (⇧ = geri) | 5 | 6 |
 | TON +1 yarım ses (⇧ = −1) | " | Ü |
 | Kulaklık CUE (ECHO tuşu + ⇧) | ⇧V | ⇧Ç |
 
@@ -86,6 +87,18 @@ Jog: VINYL açıkken iç kısmı tutup çevirmek = scratch; dış halka = tempo 
 - **+ Klasör** ile müzik klasörünü ekle; Chrome/Edge klasörü hatırlar. Şarkılar arka planda analiz edilir (BPM, süre).
 - Satırdaki **A** / **B** ile o deck'e yükle, çift tıkla boştaki deck'e yükle. Üstteki kutuda ara (BPM de yazabilirsin, ör. `124`).
 - Dosyaların kopyası alınmaz; kütüphane sadece nerede olduklarını hatırlar. Klasörü taşırsan yeniden ekle.
+
+## Pad'ler
+Her deck'te 8 pad var; ne yapacaklarını üstteki mod belirler (**5** / **6** ile değiştir):
+| Mod | Pad'ler ne yapar |
+|---|---|
+| HOT CUE | Boş pad o anı kaydeder, dolu pad oraya atlar (8 tane, şarkıyla saklanır) |
+| LOOP | ¼ – 32 vuruşluk loop aç/kapa |
+| JUMP | 1, 4, 16, 32 vuruş geri/ileri atla |
+| SLICER | Çalan 8 vuruşun dilimlerini basılı tutarak çal; bırakınca şarkı kaldığı yerden devam |
+| ROLL | Basılı tuttukça kısa tekrar ("trrrr"); bırakınca şarkı kaldığı yerden devam |
+| SAMPLER | Korna, siren, darbuka… (⇧+tık / sağ tık: kendi sesini yükle) |
+| TON | Tonu −3…+4 yarım ses kaydır |
 
 ## Beatgrid ve SYNC
 - Dalga formundaki çizgiler: ince = vuruş, beyaz = bar başı, kırmızı = phrase başı. Deck'teki sayaç hangi phrase ve barda olduğunu gösterir (tıkla: 4/8/16/32 bar).

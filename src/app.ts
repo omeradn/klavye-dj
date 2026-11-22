@@ -10,6 +10,7 @@ import { audioSettings } from './engine/settings';
 import { buildOutput, outputNodes, phones, setCueMix, setPhonesLevel, setSplit } from './engine/output';
 import { settingsOpen, setupSettings, toggleSettings } from './ui/settings';
 import { setupLibrary } from './library/library';
+import { buildSampler, sampler, setSamplerLevel } from './engine/sampler';
 
 let started = false;
 
@@ -42,6 +43,8 @@ export function initApp(): void {
 
   // output first: decks connect to the cue bus it listens to
   onCtxCreated(ctx => buildOutput(ctx));
+  onCtxCreated(ctx => buildSampler(ctx));
+  new Knob($('#sampK'), { min: 0, max: 1, def: sampler.level, onchange: setSamplerLevel });
   onCtxCreated(async () => {
     engine.master!.gain.value = masterK.v;
     await Promise.all(decks.map(d => d.wire()));

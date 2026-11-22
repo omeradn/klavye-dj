@@ -5,9 +5,13 @@ export function buildHelpTable(): void {
   const kb = (c: string) => `<kbd>${keyLabel(c)}</kbd>`;
   let h = '<tr><th>Kontrol</th><th>Deck A</th><th>Deck B</th></tr>';
   for (const [a, ka, kb2, sh, lab] of BIND) {
-    if (a === 'hot1' || a === 'hot2' || a === 'hot3') continue;
-    if (a === 'hot0') { h += `<tr><td>Hot cue 1–4 (boşsa kaydet, doluysa atla)</td><td>${kb('Digit1')}–${kb('Digit4')}</td><td>${kb('Digit7')}–${kb('Digit0')}</td></tr>`; continue; }
-    if (a === 'hotDel') { h += `<tr><td>Hot cue sil</td><td>⇧ + ${kb('Digit1')}–${kb('Digit4')}</td><td>⇧ + ${kb('Digit7')}–${kb('Digit0')}</td></tr>`; continue; }
+    if (/^pad[1-37]$/.test(a) || a === 'pad5' || a === 'pad6') continue;
+    if (a === 'pad0') { h += `<tr><td>Pad 1–4 (üst sıra; ne yaptığı pad moduna göre)</td><td>${kb('Digit1')}–${kb('Digit4')}</td><td>${kb('Digit7')}–${kb('Digit0')}</td></tr>`; continue; }
+    if (a === 'pad4') {
+      h += `<tr><td>Pad 5–8 (alt sıra)</td><td>⇧ + ${kb('Digit1')}–${kb('Digit4')}</td><td>⇧ + ${kb('Digit7')}–${kb('Digit0')}</td></tr>`;
+      h += `<tr><td>Hot cue sil / sampler'a kendi sesini yükle</td><td colspan="2"><kbd>Backspace</kbd> basılıyken pad tuşu (mouse: ⇧+tık ya da sağ tık)</td></tr>`;
+      continue;
+    }
     const p = sh ? '⇧ + ' : '';
     h += `<tr><td>${lab}</td><td>${p}${kb(ka)}</td><td>${p}${kb(kb2)}</td></tr>`;
   }
