@@ -14,6 +14,7 @@
   </div>
   <div class="mwrap" title="Sampler ses seviyesi (pad'ler SAMPLER modunda)">SAMPLER <div class="kwrap" id="sampK"></div></div>
   <div class="mwrap">MASTER <div class="kwrap" id="masterK"></div></div>
+  <button class="hbtn acad" id="acadBtn" title="Adım adım DJ dersleri (F4)">🎓 Akademi <kbd>F4</kbd></button>
   <button class="hbtn" id="setBtn">Ses ayarları <kbd>F2</kbd></button>
   <button class="hbtn" id="keysBtn">Tuş etiketleri</button>
   <button class="hbtn" id="helpBtn">Kısayollar <kbd>Esc</kbd></button>
@@ -126,4 +127,31 @@
   <div id="setBody"></div>
   <button class="hbtn" id="setClose">Kapat</button>
 </div></div>
+<div id="academy"><div class="box">
+  <div class="acHead"><h2>🎓 DJ Akademi</h2><button class="hbtn" id="acClose">Kapat</button></div>
+  <div class="acStats" id="acStats"></div>
+  <h3>Dersler <small>sırayla açılır</small></h3>
+  <ul class="acList" id="acLessons"></ul>
+  <h3>Pratik</h3>
+  <ul class="acList" id="acPractice"></ul>
+  <h3>Rozetler</h3>
+  <div class="badges" id="acBadges"></div>
+</div></div>
+
+<div id="spot"></div>
+<div id="coach">
+  <div class="cHead"><b id="coachTitle"></b><span id="coachScore"></span></div>
+  <div class="cDots" id="coachDots"></div>
+  <div class="cText" id="coachText"></div>
+  <div class="cKeys" id="coachKeys"></div>
+  <div id="coachMsg"></div>
+  <div class="cBtns">
+    <button class="hbtn" id="coachShow" title="Hayalet el önce gösterir, sonra sen yaparsın (−2 puan)">🖐 Göster</button>
+    <button class="hbtn" id="coachHint" title="İpucu (−3 puan)">💡 İpucu</button>
+    <button class="hbtn" id="coachSkip">Atla</button>
+    <button class="hbtn" id="coachExit">Çık</button>
+    <button class="hbtn primary" id="coachNext">Devam</button>
+  </div>
+</div>
+<div id="summary"><div class="box" id="summaryBox"></div></div>
 <div class="toast" id="toast"></div>

@@ -12,6 +12,8 @@ import { settingsOpen, setupSettings, toggleSettings } from './ui/settings';
 import { setupLibrary } from './library/library';
 import { buildSampler, sampler, setSamplerLevel } from './engine/sampler';
 import { buildFxPoints } from './engine/beatfx';
+import { setupAcademy, toggleAcademy } from './academy/panel';
+import { inLesson, stopLesson } from './academy/engine';
 import { chanFxNext, fxBeats, fxFrame, fxLevel, fxNext, fxTarget, fxToggle, mixerFrame, setupFxBar, setupMixerBar, wireFx } from './ui/fxbar';
 
 let started = false;
@@ -97,7 +99,12 @@ export function initApp(): void {
     ArrowDown: () => xf.set(0),
     PageUp: () => masterK.nudge(1),
     PageDown: () => masterK.nudge(-1),
-    Escape: () => { if (settingsOpen()) toggleSettings(false); else toggleHelp(); },
+    Escape: () => {
+      if (settingsOpen()) toggleSettings(false);
+      else if (document.querySelector('#academy.show')) toggleAcademy(false);
+      else toggleHelp();
+    },
+    F4: () => { if (inLesson()) stopLesson(); else toggleAcademy(); },
     F1: () => toggleHelp(),
     F2: () => toggleSettings(),
     // RİTİM FX / KANAL FX (keys between and around the decks)
@@ -114,6 +121,7 @@ export function initApp(): void {
 
   setupFxBar(decks);
   setupMixerBar();
+  setupAcademy({ decks, mixer, xf });
   setupBadges(decks);
   setupSettings();
   void setupLibrary(decks);

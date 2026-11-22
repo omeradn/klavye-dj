@@ -6,6 +6,7 @@ import { JUMP_BEATS, KEY_SEMIS, LOOP_BEATS, PAD_MODES, padLabel, ROLL_BEATS, sli
 import { loadUserSample, playSample, resetSample, sampler } from './sampler';
 import { CHAN_FX, chanFx, crushCurve, cutoff } from './chanfx';
 import { chGain, isoGain, mixerCfg } from './mixercfg';
+import { rules } from '../academy/rules';
 import { impulse } from './beatfx';
 import { detectBPM } from '../analysis/bpm';
 import {
@@ -696,6 +697,31 @@ export class Deck {
     for (let i = 0; i < b.beatsInBar; i++) ui.leds.children[i].classList.toggle('on', i === b.beat);
   }
 
+  /* ---------- helpers for the Academy ---------- */
+
+  /** Stop playback (no-op when stopped). */
+  stop(): void { if (this.playing) this.setPlaying(false); }
+
+  /** Effective tempo in BPM right now (fader + bend + nudges), or null without a grid. */
+  bpmNow(): number | null { return this.bpm ? this.bpm * this.speed() : null; }
+
+  /** Clean slate for a lesson: stopped, controls centred, no loops / hot cues / effects. */
+  resetForLesson(): void {
+    this.stop();
+    this.releasePads();
+    if (this.loopOn) this.loopOff();
+    if (this.syncOn) { this.syncOn = false; this.syncBend = 0; }
+    this.syncSetting = true; this.tempoF.set(0); this.syncSetting = false;
+    this.keyShift = 0; this.keyLock = true; this.reverse = false; this.post({ t: 'reverse', on: false });
+    this.hot = Array(8).fill(null); this.cuePt = 0;
+    this.trimK.set(1); this.hiK.set(0); this.midK.set(0); this.loK.set(0); this.filK.set(0);
+    this.kills = { lo: false, mid: false, hi: false }; this.applyEQ();
+    this.fxOn = false; this.applyFX(); this.chF.set(0.85);
+    if (this.pfl) this.act('pfl');
+    this.padMode = 'hot';
+    this.applyRate();
+  }
+
   /* ---------- performance pads ---------- */
 
   setPadMode(m: PadMode): void {
@@ -820,6 +846,7 @@ export class Deck {
         this.setPlaying(!this.playing);
         break;
       case 'sync':
+        if (rules.noSync) { toast('Bu derste SYNC kapalı: kulağınla eşitle'); break; }
         if (this.syncOn) { this.syncOn = false; this.syncBend = 0; this.applyRate(); toast(`Deck ${this.id}: SYNC kapalı`); }
         else this.syncEngage();
         break;

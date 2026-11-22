@@ -7,12 +7,33 @@ Fazların asıl numaraları brief'tekiyle aynı; burada çalışma sırasıyla l
 3. **Faz 2** Analiz ve kütüphane ✅ — 2a kütüphane · 2b beatgrid + SYNC · 2c ton, renkli dalga formu, listeler
 4. **Faz 3** Mikser, efektler, pad'ler (öne alındı) — 3a pad modları + sampler ✅ · 3b Ritim FX + Kanal FX ✅ · 3c mikser ekstraları ✅ (4 deck Faz 5'e ertelendi)
 5. **Yayın**: GitHub'a yükleme + canlı site (GitHub Pages), her güncellemede testler ve otomatik yayın (3b'den sonra)
-6. **Faz 4** DJ Akademi — set senaryosu oynatıcı ve **hayalet eller** (kullanılan kontrol parlar, Türkçe açıklama: "önce izle, sonra sen yap") dahil
+6. **Faz 4** DJ Akademi — 4a altyapı + ders 1–4 + antrenör ✅ · 4b ders 5–10 + Geçiş Sınavı · 4c ders 11–14 + Kulak Egzersizi — set senaryosu oynatıcı ve **hayalet eller** (kullanılan kontrol parlar, Türkçe açıklama: "önce izle, sonra sen yap") dahil
 7. **Faz 6a** Restoran Modu, set kaydı, canlı koç, geçiş asistanı
 8. **Faz 5** MIDI ve tuş değiştirme
 9. **Faz 6b** Reels çıktısı, hayalet mod, set planlayıcı
 10. **Ajan DJ** (yeni faz): Claude şarkıları analiz edip vuruşa oturan bir set senaryosu yazar, uygulama canlı çalar, her hamle ekranda görünür; geçişler arasında Claude planı günceller. Canlı yayınlar için (cd.md parçaları)
 11. **Faz 7** Cila ve yayın
+
+## 0.11.0 — Faz 4a · DJ Akademi: altyapı ve ilk 4 ders (2026-11-22)
+### Eklendi
+- Üst çubukta **🎓 Akademi** (F4): 14 derslik müfredat. Dersler sırayla açılır; ilerleme, yıldızlar, XP, günlük seri, pratik süresi ve rozetler tarayıcıda saklanır.
+- **Ders motoru**: her adımda kısa açıklama, ilgili kontrol **ışıkla gösterilir** (spotlight; ekranın geri kalanı kararır), basılacak tuşlar, yapıp yapmadığının **otomatik kontrolü**, anında "✓ Harika! +10" ve puan.
+  - **🖐 Göster** (−2 puan): **hayalet el** kontrolün üstüne gidip basar ve ne yaptığını anlatır; sonra sıra sende ("önce izle, sonra sen yap").
+  - **💡 İpucu** (−3 puan), **Atla**, **Çık** (F4).
+  - Bazı adımlar "böyle tut" der (ör. 8 saniye hizalı kal).
+- **Ders sonu kartı**: yıldız, puan, XP, süre, öğrendiklerin, yeni rozetler; Tekrar / Akademi / Sonraki ders.
+- **Ders 1 · Arayüz turu**: deck'ler, dalga formu, mikser, crossfader (ok tuşları), kütüphane, efektler, kısayol listesi (Esc).
+- **Ders 2 · Play, Cue ve hot cue**: Q, cue noktası koymak, CUE ile dönmek, CUE'yu basılı tutup önizlemek, hot cue koymak, atlamak, silmek.
+- **Ders 3 · BPM ve tempo**: BPM'i okumak, tempoyu 122'den 126'ya getirmek, sıfırlamak, SYNC, key lock farkı.
+- **Ders 4 · Kulakla beatmatching**: BPM'ler, tonlar ve faz göstergesi gizli, SYNC kapalı; önce tempo (H/J), sonra vuruşlar (K/L), sonra 8 saniye hizalı tutmak.
+- **Beatmatch Antrenörü**: A rastgele tempoda, sayılar gizli; B'yi en kısa sürede eşitle (3 sn hizalı = bitti). Ne kadar hızlı o kadar çok puan, en iyi skor saklanır.
+- Hayalet el betik oynatıcısı vuruşa/bara göre bekleyebiliyor; ileride **Ajan DJ** aynı altyapıyı kullanacak.
+- 9 rozet: İlk Ders, Hot Cue, Tempo Avcısı, Altın Kulak, Beatmatch Ustası (80+), Kusursuz (3 yıldız), 3 Gün Seri, 7 Gün Seri, 1 Saat.
+- Testler: seri sayımı, yıldızlar, en iyi skor, rozetler (toplam 76 test).
+
+### Denendi (tarayıcıda, gerçek tuş olaylarıyla)
+- Ders 1–4 baştan sona yalnızca demo parçalarla bitirildi; her adımın kontrolü doğru anda geçti. Ders 4'te bir insan gibi tek tek H/J ve kısa K/L basışlarıyla eşitlendi (tempo farkı 0,09 BPM, faz 2,5 ms). SYNC'e basınca "Bu derste SYNC kapalı" uyarısı geldi.
+- 🖐 Göster: hayalet el PLAY'e gidip bastı, açıklama karta yazıldı, sonra "Şimdi sen yap".
 
 ## 0.10.0 — Faz 3c · Fader eğrileri, isolator, mikrofon (2026-11-22)
 ### Eklendi
