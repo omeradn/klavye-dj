@@ -5,6 +5,7 @@ import { phonesAudible } from './output';
 import { JUMP_BEATS, KEY_SEMIS, LOOP_BEATS, PAD_MODES, padLabel, ROLL_BEATS, sliceBase, type PadMode } from './padmodes';
 import { loadUserSample, playSample, resetSample, sampler } from './sampler';
 import { CHAN_FX, chanFx, crushCurve, cutoff } from './chanfx';
+import { chGain, isoGain, mixerCfg } from './mixercfg';
 import { impulse } from './beatfx';
 import { detectBPM } from '../analysis/bpm';
 import {
@@ -132,6 +133,8 @@ export class Deck {
   private wiring?: Promise<void>;
   trim?: GainNode;
   lo?: BiquadFilterNode; mid?: BiquadFilterNode; hi?: BiquadFilterNode; fil?: BiquadFilterNode;
+  /** EQ vs isolator: both chains exist, a crossfade picks one */
+  private iso?: { eqG: GainNode; isoG: GainNode; lo: GainNode; mid: GainNode; hi: GainNode };
   chGain?: GainNode; cueG?: GainNode; xfG?: GainNode;
   /** Ritim FX insert point (between channel fader and crossfader) */
   insIn?: GainNode; insOut?: GainNode;
@@ -381,7 +384,8 @@ export class Deck {
 
     const fd = document.createElement('div'); fd.dataset.a = 'fader'; c.appendChild(fd);
     const lb = document.createElement('div'); lb.className = 'lbl2'; lb.textContent = 'KANAL'; c.appendChild(lb);
-    this.chF = new Fader(fd, { min: 0, max: 1, def: 0.85, onchange: v => { if (this.chGain) ramp(this.chGain.gain, v * v); } });
+    this.chF = new Fader(fd, { min: 0, max: 1, def: 0.85, onchange: v => { if (this.chGain) ramp(this.chGain.gain, chGain(mixerCfg.ch, v), 0.004); } });
+    mixerCfg.listeners.push(() => { this.chF.set(this.chF.v); this.applyEQ(); });
     fd.style.height = '150px';
 
     this.hiK.w.dataset.a = 'killHigh'; this.midK.w.dataset.a = 'killMid'; this.loK.w.dataset.a = 'killLow';
@@ -428,7 +432,7 @@ export class Deck {
     this.mid = C.createBiquadFilter(); this.mid.type = 'peaking'; this.mid.frequency.value = 1000; this.mid.Q.value = 0.7;
     this.hi = C.createBiquadFilter(); this.hi.type = 'highshelf'; this.hi.frequency.value = 3800;
     this.fil = C.createBiquadFilter();
-    this.chGain = C.createGain(); this.chGain.gain.value = this.chF.v ** 2;
+    this.chGain = C.createGain(); this.chGain.gain.value = chGain(mixerCfg.ch, this.chF.v);
     this.cueG = C.createGain(); this.cueG.gain.value = this.pfl ? 1 : 0;
     this.xfG = C.createGain();
     this.fxSend = C.createGain(); this.fxSend.gain.value = 0;
@@ -445,7 +449,21 @@ export class Deck {
     let seed = this.i + 7;
     for (let i = 0; i < nd.length; i++) { seed = (seed * 16807) % 2147483647; nd[i] = (seed / 2147483647) * 2 - 1; }
     const noise = C.createBufferSource(); noise.buffer = nb; noise.loop = true; noise.start();
-    this.klMix.connect(this.trim).connect(this.lo).connect(this.mid).connect(this.hi).connect(this.fil);
+    // ISOLATOR: 3-band Linkwitz-Riley (24 dB/oct) split at 250 Hz and 2.5 kHz; the bands sum back flat
+    // Butterworth Q: Web Audio reads Q in dB for low/high-pass (−3.01 dB = 0.707) but linearly for all-pass
+    const bq = (type: BiquadFilterType, f: number) => {
+      const b = C.createBiquadFilter(); b.type = type; b.frequency.value = f;
+      b.Q.value = type === 'allpass' ? Math.SQRT1_2 : 20 * Math.log10(Math.SQRT1_2);
+      return b;
+    };
+    const chain = (from: AudioNode, ...ns: AudioNode[]) => ns.reduce((p, n) => p.connect(n), from);
+    const eqG = g(1), isoG = g(0), isoSum = g(1), bLo = g(1), bMid = g(1), bHi = g(1);
+    this.klMix.connect(this.trim).connect(this.lo).connect(this.mid).connect(this.hi).connect(eqG).connect(this.fil);
+    chain(this.trim, bq('lowpass', 250), bq('lowpass', 250), bq('allpass', 2500), bLo, isoSum);
+    chain(this.trim, bq('highpass', 250), bq('highpass', 250), bq('lowpass', 2500), bq('lowpass', 2500), bMid, isoSum);
+    chain(this.trim, bq('highpass', 250), bq('highpass', 250), bq('highpass', 2500), bq('highpass', 2500), bHi, isoSum);
+    isoSum.connect(isoG).connect(this.fil);
+    this.iso = { eqG, isoG, lo: bLo, mid: bMid, hi: bHi };
     this.fil.connect(dry).connect(sum);
     this.fil.connect(spSend).connect(conv).connect(spFilt).connect(sum);
     this.fil.connect(crush).connect(crFilt).connect(crWet).connect(sum);
@@ -946,10 +964,16 @@ export class Deck {
     this.hiK.el.classList.toggle('kill', k.hi);
     this.midK.el.classList.toggle('kill', k.mid);
     this.loK.el.classList.toggle('kill', k.lo);
-    if (!this.hi || !this.mid || !this.lo) return;
+    if (!this.hi || !this.mid || !this.lo || !this.iso) return;
+    const iso = mixerCfg.eq === 'iso', x = this.iso;
+    ramp(x.eqG.gain, iso ? 0 : 1, 0.01); ramp(x.isoG.gain, iso ? 1 : 0, 0.01);
+    // EQ: shelves, kill = −40 dB · ISOLATOR: band gains, knob fully down or kill = band gone
     ramp(this.hi.gain, k.hi ? -40 : this.hiK.v, 0.005);
     ramp(this.mid.gain, k.mid ? -40 : this.midK.v, 0.005);
     ramp(this.lo.gain, k.lo ? -40 : this.loK.v, 0.005);
+    ramp(x.hi.gain, k.hi ? 0 : isoGain(this.hiK.v), 0.005);
+    ramp(x.mid.gain, k.mid ? 0 : isoGain(this.midK.v), 0.005);
+    ramp(x.lo.gain, k.lo ? 0 : isoGain(this.loK.v), 0.005);
   }
 
   /** The channel FX knob: FİLTRE, SPACE, NOISE or CRUSH (chosen for both channels in the FX bar). */

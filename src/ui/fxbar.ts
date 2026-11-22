@@ -102,3 +102,39 @@ export function wireFx(): void {
   }
   ritimFx.setTarget(ritimFx.target);
 }
+
+/* ---------- MİKSER + MİKROFON units ---------- */
+import { CH_CURVES, mixerCfg, setMixerCfg, XF_CURVES, type EqMode } from '../engine/mixercfg';
+import { mic, micFrame, micToggle, setDuck, setMicLevel } from '../engine/mic';
+
+function cycle<T extends { id: string; label: string; help: string }>(list: T[], cur: string): T {
+  return list[(list.findIndex(x => x.id === cur) + 1) % list.length];
+}
+
+export function setupMixerBar(): void {
+  $('#xfCurve').onclick = () => { const c = cycle(XF_CURVES, mixerCfg.xf); setMixerCfg({ xf: c.id }); toast(`Crossfader eğrisi: ${c.label} — ${c.help}`); };
+  $('#chCurve').onclick = () => { const c = cycle(CH_CURVES, mixerCfg.ch); setMixerCfg({ ch: c.id }); toast(`Kanal fader eğrisi: ${c.label} — ${c.help}`); };
+  $('#eqMode').onclick = e => {
+    const m = (e.target as HTMLElement).closest<HTMLElement>('[data-m]')?.dataset.m as EqMode | undefined;
+    if (!m) return;
+    setMixerCfg({ eq: m });
+    toast(m === 'iso' ? 'ISOLATOR: her düğme kendi bandını tamamen kesebilir (sona çevirince o bant yok olur)' : 'EQ: klasik ton ayarı (−26…+6 dB)');
+  };
+  $('#xfCurve').title = XF_CURVES.map(c => `${c.label}: ${c.help}`).join('\n');
+  $('#chCurve').title = CH_CURVES.map(c => `${c.label}: ${c.help}`).join('\n');
+  new Knob($('#micK'), { min: 0, max: 1, def: mic.level, label: 'SEVİYE', onchange: setMicLevel });
+  $('#micOn').onclick = () => void micToggle();
+  $('#duckBtn').onclick = () => { setDuck(!mic.duckOn); toast(mic.duckOn ? `DUCK açık: konuşunca müzik ${mic.depth} dB kısılır` : 'DUCK kapalı: müzik konuşurken de aynı seste'); };
+}
+
+export function mixerFrame(now: number): void {
+  micFrame(now);
+  setText($('#xfCurve'), XF_CURVES.find(c => c.id === mixerCfg.xf)!.label);
+  setText($('#chCurve'), CH_CURVES.find(c => c.id === mixerCfg.ch)!.label);
+  document.querySelectorAll<HTMLElement>('#eqMode [data-m]').forEach(b => b.classList.toggle('on', b.dataset.m === mixerCfg.eq));
+  $('#micOn').classList.toggle('on', mic.on);
+  $('#duckBtn').classList.toggle('on', mic.duckOn);
+  const led = $('#micLed');
+  led.style.opacity = String(mic.on ? 0.25 + mic.meter * 0.75 : 0.15);
+  led.classList.toggle('talk', mic.speaking);
+}

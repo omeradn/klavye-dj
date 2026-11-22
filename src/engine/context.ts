@@ -19,12 +19,14 @@ export const engine: {
   /** master insert point for the Ritim FX unit (bus -> fxIn -> fxOut -> master) */
   fxIn: GainNode | null;
   fxOut: GainNode | null;
+  /** music level under the microphone (ducking); the mic itself joins after this, at the master */
+  duck: GainNode | null;
   master: GainNode | null;
   limiter: AudioWorkletNode | null;
   ready: Promise<void> | null;
   meter: { gr: number; peakIn: number; peakOut: number; overAt: number; limitAt: number };
 } = {
-  ctx: null, bus: null, cueBus: null, fxIn: null, fxOut: null, master: null, limiter: null, ready: null,
+  ctx: null, bus: null, cueBus: null, fxIn: null, fxOut: null, duck: null, master: null, limiter: null, ready: null,
   meter: { gr: 1, peakIn: 0, peakOut: 0, overAt: -1e9, limitAt: -1e9 },
 };
 
@@ -47,7 +49,8 @@ export function ensureCtx(): AudioContext {
   engine.master = ctx.createGain();
   engine.fxIn = ctx.createGain();
   engine.fxOut = ctx.createGain();
-  engine.bus.connect(engine.fxIn).connect(engine.fxOut).connect(engine.master);
+  engine.duck = ctx.createGain();
+  engine.bus.connect(engine.fxIn).connect(engine.fxOut).connect(engine.duck).connect(engine.master);
   engine.ready = (async () => {
     await ctx.audioWorklet.addModule(deckWorkletUrl);
     await ctx.audioWorklet.addModule(limiterWorkletUrl);

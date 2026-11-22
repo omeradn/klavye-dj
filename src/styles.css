@@ -249,9 +249,9 @@ kbd{background:#000;border:1px solid #444b57;border-bottom-width:2px;border-radi
 .pad.m-key.on{background:#2a2040;border-color:var(--violet);color:#e7dcff}
 
 /* RİTİM FX / KANAL FX bar (Faz 3b) */
-.fxbar{margin:0 14px 12px;display:flex;gap:10px;flex-wrap:wrap}
+.fxbar{margin:0 14px 12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}
 .fxu{display:flex;align-items:center;gap:7px;flex-wrap:wrap;background:linear-gradient(180deg,var(--body2),var(--body));border:1px solid var(--line);border-radius:14px;padding:8px 12px}
-.fxu:first-child{flex:1}
+.fxu:first-child{grid-column:1/-1}
 .fxu b{letter-spacing:2px;font-size:12px}
 .fxu .lbl{font-size:10px;color:var(--mut);letter-spacing:1px;margin-left:6px}
 .fxn{min-width:92px;text-align:center;font:700 13px ui-monospace,monospace;color:var(--amber);background:#0f1114;border:1px solid var(--line);border-radius:6px;padding:4px 6px}
@@ -264,3 +264,11 @@ kbd{background:#000;border:1px solid #444b57;border-bottom-width:2px;border-radi
 #fxLevelK .knob{width:34px;height:34px}
 #fxLevelK .knob i{height:9px;transform-origin:50% 13px}
 #fxOn{min-width:54px}
+
+/* MİKSER + MİKROFON (Faz 3c) */
+.b.sm.wide{min-width:74px}
+#micLed{width:10px;height:10px;border-radius:50%;background:var(--green);opacity:.15}
+#micLed.talk{background:var(--red);box-shadow:0 0 8px var(--red)}
+#micK .knob{width:34px;height:34px}
+#micK .knob i{height:9px;transform-origin:50% 13px}
+#duckBtn.on{border-color:var(--green);color:var(--green)}

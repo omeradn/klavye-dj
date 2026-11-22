@@ -12,7 +12,7 @@ import { settingsOpen, setupSettings, toggleSettings } from './ui/settings';
 import { setupLibrary } from './library/library';
 import { buildSampler, sampler, setSamplerLevel } from './engine/sampler';
 import { buildFxPoints } from './engine/beatfx';
-import { chanFxNext, fxBeats, fxFrame, fxLevel, fxNext, fxTarget, fxToggle, setupFxBar, wireFx } from './ui/fxbar';
+import { chanFxNext, fxBeats, fxFrame, fxLevel, fxNext, fxTarget, fxToggle, mixerFrame, setupFxBar, setupMixerBar, wireFx } from './ui/fxbar';
 
 let started = false;
 
@@ -88,7 +88,7 @@ export function initApp(): void {
     phI.className = ok ? 'ok' : Math.abs(ms) < 25 ? 'near' : '';
     setText(phT, ok ? 'hizalı' : `B ${Math.abs(ms).toFixed(0)} ms ${ms > 0 ? 'önde' : 'geride'}`);
   };
-  const loop = (now: number) => { decks.forEach(d => d.frame(now)); meter(now); phase(); fxFrame(); requestAnimationFrame(loop); };
+  const loop = (now: number) => { decks.forEach(d => d.frame(now)); meter(now); phase(); fxFrame(); mixerFrame(now); requestAnimationFrame(loop); };
   requestAnimationFrame(loop);
 
   setupKeyboard(decks, {
@@ -113,6 +113,7 @@ export function initApp(): void {
   if (import.meta.env.DEV) (window as unknown as Record<string, unknown>).kdj = { decks, engine, mixer, out: outputNodes };
 
   setupFxBar(decks);
+  setupMixerBar();
   setupBadges(decks);
   setupSettings();
   void setupLibrary(decks);

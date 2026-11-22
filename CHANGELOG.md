@@ -5,7 +5,7 @@ Fazların asıl numaraları brief'tekiyle aynı; burada çalışma sırasıyla l
 1. **Faz 0** Kurulum ve taşıma ✅
 2. **Faz 1** Ses motoru ✅ — 1a worklet, limiter, demo · 1b key lock · 1c kulaklık cue
 3. **Faz 2** Analiz ve kütüphane ✅ — 2a kütüphane · 2b beatgrid + SYNC · 2c ton, renkli dalga formu, listeler
-4. **Faz 3** Mikser, efektler, pad'ler (öne alındı) — 3a pad modları + sampler ✅ · 3b Ritim FX + Kanal FX ✅ · 3c mikser ekstraları
+4. **Faz 3** Mikser, efektler, pad'ler (öne alındı) — 3a pad modları + sampler ✅ · 3b Ritim FX + Kanal FX ✅ · 3c mikser ekstraları ✅ (4 deck Faz 5'e ertelendi)
 5. **Yayın**: GitHub'a yükleme + canlı site (GitHub Pages), her güncellemede testler ve otomatik yayın (3b'den sonra)
 6. **Faz 4** DJ Akademi — set senaryosu oynatıcı ve **hayalet eller** (kullanılan kontrol parlar, Türkçe açıklama: "önce izle, sonra sen yap") dahil
 7. **Faz 6a** Restoran Modu, set kaydı, canlı koç, geçiş asistanı
@@ -13,6 +13,27 @@ Fazların asıl numaraları brief'tekiyle aynı; burada çalışma sırasıyla l
 9. **Faz 6b** Reels çıktısı, hayalet mod, set planlayıcı
 10. **Ajan DJ** (yeni faz): Claude şarkıları analiz edip vuruşa oturan bir set senaryosu yazar, uygulama canlı çalar, her hamle ekranda görünür; geçişler arasında Claude planı günceller. Canlı yayınlar için (cd.md parçaları)
 11. **Faz 7** Cila ve yayın
+
+## 0.10.0 — Faz 3c · Fader eğrileri, isolator, mikrofon (2026-11-22)
+### Eklendi
+- **MİKSER** kutusu:
+  - **Crossfader eğrisi**: YUMUŞAK (ses yüksekliği sabit, uzun geçişler), DÜZ (ortada ikisi de tam ses), KESKİN (scratch; çok az hareketle tam açılır).
+  - **Kanal fader eğrisi**: YUMUŞAK, DÜZ, KESKİN.
+  - **EQ / ISOLATOR**: ISOLATOR'da HI/MID/LOW düğmeleri sona çevrilince o bant tamamen yok olur (250 Hz ve 2,5 kHz'de 24 dB/oktav bölme). Bantlar ortadayken ses birebir aynı (toplam sapma 0,000 dB).
+  - Seçimler tarayıcıda saklanır.
+- **🎤 MİKROFON** kutusu: anons için mikrofon (ON, SEVİYE, konuşurken kırmızı yanan ışık). Ses temizliği: alçak frekans kesici + hafif kompresör; master limiter'dan geçer.
+  - **DUCK**: konuşunca müzik 12 dB kısılır (≈50 ms'de), susunca 0,6 sn bekleyip yumuşakça geri gelir. Mikrofon kendisi kısılmaz.
+- Testler: eğriler, isolator kazancı (toplam 72 test).
+
+### Ölçüldü (tarayıcıda)
+- Isolator bantlarının toplamı 20 Hz–20 kHz arası düz (0,000 dB). Bant kesme: 60 Hz'de −49 dB, 1 kHz'de −31 dB, 10 kHz'de −55 dB.
+- Ducking (mikrofon yerine 300 Hz test sesiyle): konuşma başlayınca müzik −12 dB, susunca 0,5 sn sonra hâlâ kısık, 2 sn içinde tam ses. DUCK kapalıyken müzik kısılmıyor.
+
+### Ertelendi
+- 4 deck: ekran ve klavye iki deck'e göre; asıl MIDI kontrolcüyle anlamlı olduğu için Faz 5'te (MIDI) ele alınacak.
+
+### Bilinen
+- Gerçek mikrofonla burada denenemedi (tarayıcı panelinde mikrofon yok). Hoparlöre yakın konuşursan ıslık (feedback) olabilir; uygulama mikrofonu açarken uyarır.
 
 ## Yayın (2026-11-22)
 - Proje GitHub'da: https://github.com/omeradn/klavye-dj (herkese açık). Canlı site: https://omeradn.github.io/klavye-dj/

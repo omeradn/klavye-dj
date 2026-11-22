@@ -72,6 +72,19 @@
     <button class="b sm" id="cfxNext" title="Sonraki (↑)">▶</button>
     <span class="note">Kanallardaki düğme (⇧D / ⇧F, ⇧G ortala)</span>
   </div>
+  <div class="fxu">
+    <b>MİKSER</b>
+    <span class="lbl">CROSSFADER</span><button class="b sm wide" id="xfCurve">YUMUŞAK</button>
+    <span class="lbl">KANAL</span><button class="b sm wide" id="chCurve">YUMUŞAK</button>
+    <span class="lbl">EQ</span><span class="seg" id="eqMode"><button data-m="eq">EQ</button><button data-m="iso">ISOLATOR</button></span>
+  </div>
+  <div class="fxu">
+    <b>🎤 MİKROFON</b>
+    <button class="b red" id="micOn" title="Mikrofonu aç / kapat (anons için)">ON</button>
+    <i id="micLed"></i>
+    <div id="micK"></div>
+    <button class="b sm" id="duckBtn" title="Konuşunca müzik kendiliğinden kısılır, susunca geri gelir">DUCK</button>
+  </div>
 </section>
 
 <section class="lib">
