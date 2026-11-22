@@ -3,6 +3,11 @@ import { Knob, Fader } from '../ui/controls';
 import { engine, ensureCtx, ramp } from './context';
 import { phonesAudible } from './output';
 import { detectBPM } from '../analysis/bpm';
+import {
+  analyzeGrid, barPos, downbeatAt, lineKind, METER_ORDER, METERS, phaseAt, pulseLen, setBpmAt, snap, wrapHalf, type Grid,
+} from '../analysis/grid';
+import { fileSig } from '../library/model';
+import { loadMeta, saveMeta } from '../library/trackmeta';
 import { computePeaks, PPS } from '../analysis/peaks';
 import { DEMOS, renderDemo } from '../demo/synth';
 import type { DeckIn, DeckState } from './worklets/protocol';
@@ -44,6 +49,19 @@ export class Deck {
   cuePt = 0; cuePreview = false;
   hot: (number | null)[] = [null, null, null, null];
   bpm: number | null = null;
+  /** beatgrid (null = unknown); `bpm` mirrors grid.bpm */
+  grid: Grid | null = null;
+  /** phrase length in bars for the counter and the red phrase lines */
+  phraseBars = 8;
+  /** QUANTIZE: cue, hot cue and loops snap to the grid; hot cue jumps keep the beat phase */
+  quantize = true;
+  /** SYNC latched: follows the other deck's tempo and keeps the beats aligned */
+  syncOn = false;
+  private syncBend = 0;
+  private syncSetting = false;
+  /** saved-data key of the loaded song ('' = none) */
+  sig = '';
+  private srcFile: File | null = null;
   loopOn = false; loopBeats = 4; loopS = 0; loopE = 0;
   kills = { lo: false, mid: false, hi: false };
   fxOn = false; keyLock = true;
@@ -62,7 +80,7 @@ export class Deck {
   vu = 0;
   wired = false;
   /** called after a file was analysed here (the library caches the result) */
-  onAnalyzed?: (f: File, bpm: number | null, dur: number) => void;
+  onAnalyzed?: (f: File, bpm: number | null, dur: number, grid: Grid | null) => void;
 
   // controls
   tempoF!: Fader; chF!: Fader;
@@ -132,7 +150,7 @@ export class Deck {
     this.el.innerHTML = `
       <div class="dtop"><div class="dname">${L}</div><div class="dtitle">Şarkı yok — sürükle bırak, LOAD ya da DEMO</div>
         <div class="dbpm" title="Tık: ×2 · Shift+tık: ½">— <small>BPM</small></div></div>
-      <div class="dinfo"><span class="rem">-0:00</span><span class="tp">±0.00%</span><span class="kl">KEY LOCK</span><span class="lp"></span></div>
+      <div class="dinfo"><span class="rem">-0:00</span><span class="tp">±0.00%</span><span class="kl">KEY LOCK</span><span class="lp"></span><span class="bars" title="Phrase · bar (tıkla: phrase uzunluğu 4/8/16/32 bar)"></span><span class="leds"></span></div>
       <div class="dbody">
         <div class="jogwrap"><div class="jog" data-a="jog" title="İç kısım: scratch (VINYL açıkken) · Dış halka: tempo dürtme"><div class="platter"><i></i></div><div class="jogc"><div><b class="jt">0:00</b><span class="jr">-0:00</span></div></div></div></div>
         <div class="tcol"><span class="lbl">TEMPO</span><div class="tf" data-a="tempo"></div>
@@ -164,6 +182,16 @@ export class Deck {
         <button class="b" data-a="brake" title="Plak çaları kapatır gibi yavaşça durur">BRAKE</button>
         <button class="b" data-a="spinback" title="Plağı geri savurup durdurur">SPIN</button>
       </div>
+      <div class="row grow">
+        <span class="glbl">GRID</span>
+        <button class="b sm" data-a="gridLeft" title="Grid'i 5 ms sola kaydır (Shift+tık: 1 ms)">◁</button>
+        <button class="b sm" data-a="gridRight" title="Grid'i 5 ms sağa kaydır (Shift+tık: 1 ms)">▷</button>
+        <button class="b sm" data-a="downbeat" title="Çalan yere en yakın vuruşu 1. vuruş yap (bar ve phrase başı)">1.1</button>
+        <button class="b sm" data-a="bpmDown" title="BPM −0,05 (Shift+tık: −0,01); çalan yerdeki çizgi yerinde kalır">BPM−</button>
+        <button class="b sm" data-a="bpmUp" title="BPM +0,05 (Shift+tık: +0,01)">BPM+</button>
+        <button class="b sm mtr" data-a="meter" title="Ölçü: 4/4 · 6/8 · 7/8 aksak · 9/8 aksak · 10/8 aksak. Aksak ölçülerde BPM = sekizlik vuruş sayısı">4/4</button>
+        <button class="b sm" data-a="quantize" title="QUANTIZE: cue, hot cue ve loop en yakın vuruşa oturur; hot cue'ya atlarken ritim kaymaz">QUANT</button>
+      </div>
       <div class="pads">
         ${[1, 2, 3, 4].map(n => `<button class="pad hc" data-a="hot${n}">HOT CUE ${n}</button>`).join('')}
         ${[1, 2, 4, 8].map(n => `<button class="pad lp" data-a="bl${n}">LOOP ${n}</button>`).join('')}
@@ -179,13 +207,17 @@ export class Deck {
     const sel = (s: string) => this.el.querySelector<HTMLElement>(s)!;
     this.ui = {
       title: sel('.dtitle'), bpm: sel('.dbpm'), rem: sel('.rem'), tp: sel('.tp'), kl: sel('.kl'), lp: sel('.lp'),
-      jt: sel('.jt'), jr: sel('.jr'), platter: sel('.platter'), ksv: sel('.ksv'),
+      jt: sel('.jt'), jr: sel('.jr'), platter: sel('.platter'), ksv: sel('.ksv'), bars: sel('.bars'), leds: sel('.leds'),
+      mtr: sel('.mtr'),
     };
 
     this.tempoF = new Fader(q('tempo'), {
       min: -0.16, max: 0.16, def: 0, step: 0.001,
       // applyFX keeps the echo time locked to the current tempo
-      onchange: v => { this.tempo = v; this.applyRate(); this.applyFX(); },
+      onchange: v => {
+        this.tempo = v; this.applyRate(); this.applyFX();
+        if (this.syncOn && !this.syncSetting) { this.syncOn = false; toast(`Deck ${this.id}: SYNC kapandı (tempo elle değişti)`); }
+      },
     });
     q('tempo').classList.add('tick');
 
@@ -196,6 +228,8 @@ export class Deck {
     const click = (a: string, fn: (e: MouseEvent) => void) => q(a).addEventListener('click', e => { ensureCtx(); fn(e); });
     for (const a of ['play', 'sync', 'keylock', 'loop', 'loopHalf', 'loopDouble', 'jumpBack', 'jumpFwd', 'load', 'demo',
       'tempoReset', 'vinyl', 'slip', 'reverse', 'brake', 'spinback', 'keyUp', 'keyDown', 'keyReset']) click(a, () => this.act(a));
+    for (const a of ['gridLeft', 'gridRight', 'downbeat', 'bpmDown', 'bpmUp', 'meter', 'quantize']) click(a, e => this.gridAct(a, e.shiftKey));
+    this.ui.bars.onclick = () => { this.phraseBars = this.phraseBars >= 32 ? 4 : this.phraseBars * 2; toast(`Phrase: ${this.phraseBars} bar`); };
     [1, 2, 3, 4].forEach((n, i) => click('hot' + n, e => this.act(e.shiftKey ? 'hotDel' : 'hot', i)));
     [1, 2, 4, 8].forEach(n => click('bl' + n, () => this.beatLoop(n)));
 
@@ -209,9 +243,10 @@ export class Deck {
 
     this.ui.bpm.onclick = e => {
       if (!this.bpm) return;
-      this.bpm = e.shiftKey ? this.bpm / 2 : this.bpm * 2;
-      if (this.bpm > 200) this.bpm /= 4;
-      this.updLoop();
+      let b = e.shiftKey ? this.bpm / 2 : this.bpm * 2;
+      if (b > 250) b /= 4;
+      if (this.grid) this.setGrid({ ...this.grid, bpm: b });
+      else { this.bpm = b; this.updLoop(); }
     };
 
     this.buildJog(q('jog'));
@@ -353,7 +388,7 @@ export class Deck {
   }
 
   /** Playback speed factor from tempo fader + pitch bend + jog nudge. */
-  private speed(): number { return clamp(1 + this.tempo + this.bend + this.jogBend, 0.25, 3); }
+  speed(): number { return clamp(1 + this.tempo + this.bend + this.jogBend + this.syncBend, 0.25, 3); }
 
   /**
    * Pitch correction in semitones: key lock cancels the pitch change of the tempo,
@@ -371,8 +406,8 @@ export class Deck {
   }
 
   /* ---------- loading ---------- */
-  /** Load a song file. `knownBpm` (from the library cache) skips BPM detection. */
-  async load(f: File, knownBpm?: number | null): Promise<void> {
+  /** Load a song file. `known` (from the library cache) skips the analysis. */
+  async load(f: File, known?: { bpm: number | null; grid: Grid | null }): Promise<void> {
     const ctx = ensureCtx();
     if (this.playing && !confirm(`Deck ${this.id} şu an çalıyor. Yine de yeni şarkı yüklensin mi?`)) return;
     this.ui.title.textContent = f.name.replace(/\.[^.]+$/, '');
@@ -381,9 +416,14 @@ export class Deck {
       const buf = await ctx.decodeAudioData(await f.arrayBuffer());
       const L = buf.getChannelData(0), R = buf.numberOfChannels > 1 ? buf.getChannelData(1) : L;
       this.peaks = computePeaks(L, buf.sampleRate);
-      const bpm = knownBpm !== undefined ? knownBpm : detectBPM(L, buf.sampleRate);
-      if (knownBpm === undefined) this.onAnalyzed?.(f, bpm, buf.duration);
-      await this.setTrack(f.name.replace(/\.[^.]+$/, ''), new Float32Array(L), new Float32Array(R), buf.sampleRate, bpm);
+      let grid = known?.grid ?? null;
+      if (!grid) {
+        const bpm = known ? known.bpm : detectBPM(L, buf.sampleRate);
+        grid = bpm ? analyzeGrid(L, buf.sampleRate, bpm) ?? { bpm, offset: 0, meter: '4/4', phraseBar: 0 } : null;
+        this.onAnalyzed?.(f, grid?.bpm ?? null, buf.duration, grid);
+      }
+      this.srcFile = f;
+      await this.setTrack(f.name.replace(/\.[^.]+$/, ''), new Float32Array(L), new Float32Array(R), buf.sampleRate, grid, fileSig(f));
     } catch {
       toast('Bu dosya açılamadı (desteklenmeyen biçim olabilir)');
     }
@@ -399,20 +439,27 @@ export class Deck {
     await new Promise(r => setTimeout(r, 30)); // let the toast paint
     const { L, R } = renderDemo(spec, ctx.sampleRate);
     this.peaks = computePeaks(L, ctx.sampleRate);
-    await this.setTrack(spec.name, L, R, ctx.sampleRate, spec.bpm);
+    this.srcFile = null;
+    // demos are made on an exact grid: bar 1 at 0 s, phrases of 8 bars
+    await this.setTrack(spec.name, L, R, ctx.sampleRate, { bpm: spec.bpm, offset: 0, meter: '4/4', phraseBar: 0 }, 'demo:' + spec.name);
   }
 
-  private async setTrack(name: string, L: Float32Array, R: Float32Array, sr: number, bpm: number | null): Promise<void> {
+  private async setTrack(name: string, L: Float32Array, R: Float32Array, sr: number, grid: Grid | null, sig: string): Promise<void> {
     await engine.ready;
     await this.wire();
-    this.len = L.length; this.sr = sr; this.title = name;
-    Object.assign(this, { pos: 0, posAt: 0, playing: false, audible: false, cuePt: 0, cuePreview: false,
-      hot: [null, null, null, null], bpm, loopOn: false, reverse: false, censor: false, ovImg: null });
+    const meta = await loadMeta(sig);
+    this.len = L.length; this.sr = sr; this.title = name; this.sig = '';
+    Object.assign(this, { pos: 0, posAt: 0, playing: false, audible: false, cuePt: meta?.cue ?? 0, cuePreview: false,
+      hot: meta?.hot ? [...meta.hot] : [null, null, null, null], loopOn: false, reverse: false, censor: false, ovImg: null, syncOn: false, syncBend: 0 });
+    this.setGrid(meta?.grid ?? grid, false);
+    this.sig = sig;
+    const bpm = this.bpm ? +this.bpm.toFixed(2) : null;
     this.post({ t: 'load', L, R }, [L.buffer, R.buffer]);
+    if (this.cuePt) this.seek(this.cuePt);
     this.applyRate();
     this.ui.title.textContent = name;
     this.buildOverview(); this.updLoop();
-    toast(`Deck ${this.id} hazır${bpm ? ' · ' + bpm + ' BPM' : ''}`);
+    toast(`Deck ${this.id} hazır${bpm ? ' · ' + bpm + ' BPM' : ''}${meta ? ' · kayıtlı cue ve grid yüklendi' : ''}`);
   }
 
   private buildOverview(): void {
@@ -431,6 +478,114 @@ export class Deck {
     this.ovImg = c;
   }
 
+  /* ---------- beatgrid ---------- */
+
+  setGrid(g: Grid | null, save = true): void {
+    this.grid = g;
+    this.bpm = g ? g.bpm : null;
+    if (this.ui) this.ui.mtr.textContent = g ? g.meter : '4/4';
+    this.updLoop();
+    if (save) {
+      this.persist();
+      if (this.srcFile) this.onAnalyzed?.(this.srcFile, this.bpm, this.duration, g);
+    }
+  }
+
+  /** Save grid + cues with the song. */
+  private persist(): void {
+    if (this.sig) saveMeta(this.sig, { grid: this.grid, cue: this.cuePt, hot: this.hot });
+  }
+
+  /** Quantized time (nearest grid line) when QUANTIZE is on. */
+  private qt(t: number): number { return this.quantize && this.grid ? snap(this.grid, t) : t; }
+
+  private gridAct(a: string, fine: boolean): void {
+    if (a === 'quantize') {
+      this.quantize = !this.quantize;
+      toast(`Deck ${this.id}: QUANTIZE ${this.quantize ? 'açık' : 'kapalı'}`);
+      return;
+    }
+    const g = this.grid, t = this.currentTime();
+    if (!g || !this.has) { toast('Önce şarkı yükle (grid için BPM gerekli)'); return; }
+    switch (a) {
+      case 'gridLeft': this.setGrid({ ...g, offset: g.offset - (fine ? 0.001 : 0.005) }); break;
+      case 'gridRight': this.setGrid({ ...g, offset: g.offset + (fine ? 0.001 : 0.005) }); break;
+      case 'downbeat': this.setGrid(downbeatAt(g, t)); toast('Bu vuruş artık bar 1 · phrase başı'); break;
+      case 'bpmDown': case 'bpmUp': {
+        const d = (a === 'bpmUp' ? 1 : -1) * (fine ? 0.01 : 0.05);
+        this.setGrid(setBpmAt(g, Math.round((g.bpm + d) * 1000) / 1000, t));
+        break;
+      }
+      case 'meter': {
+        const m = METER_ORDER[(METER_ORDER.indexOf(g.meter) + 1) % METER_ORDER.length];
+        this.setGrid({ ...g, meter: m });
+        toast(`Ölçü: ${METERS[m].label}${m !== '4/4' ? " (BPM = sekizlik vuruş; gerekirse BPM'e tıklayıp ×2 / ½)" : ''}`);
+        break;
+      }
+    }
+  }
+
+  /** Beat phase difference to the other deck in pulses (−0.5…+0.5), or null. */
+  phaseDiff(): number | null {
+    const o = this.other;
+    if (!this.grid || !o.grid || !this.has || !o.has) return null;
+    return wrapHalf(phaseAt(o.grid, o.currentTime()) - phaseAt(this.grid, this.currentTime()));
+  }
+
+  /** Tempo fader value needed to match the other deck (folding ×2 / ½ for half/double time), or null. */
+  private syncTarget(): number | null {
+    const o = this.other, own = this.bpm;
+    if (!own || !o.bpm) return null;
+    const target = o.bpm * (1 + o.tempo);
+    const fold = [1, 2, 0.5].map(f => target * f).find(b => Math.abs(b / own - 1) <= 0.16);
+    return fold == null ? null : fold / own - 1;
+  }
+
+  /** SYNC on: match tempo, then line up the beats (jump by the phase difference). */
+  private syncEngage(): void {
+    const t = this.syncTarget();
+    if (t == null) {
+      toast(this.bpm && this.other.bpm ? "Tempo farkı ±%16 dışında (BPM'e tıklayıp ×2 / ½ dene)" : "SYNC için iki deck'te de şarkı ve BPM gerekli");
+      return;
+    }
+    this.other.syncOn = false;
+    this.syncSetting = true; this.tempoF.set(t); this.syncSetting = false;
+    this.syncOn = true;
+    const e = this.phaseDiff();
+    if (e != null && this.grid && this.playing && this.other.playing) {
+      const d = e * pulseLen(this.grid) * this.sr;
+      this.post({ t: 'jump', d }); this.pos += d;
+    }
+    toast(`Deck ${this.id} SYNC → ${(this.other.bpm! * (1 + this.other.tempo)).toFixed(2)} BPM${this.grid && this.other.grid ? ' · vuruşlar kilitli' : ''}`);
+  }
+
+  /** While SYNC is latched: follow the other deck's tempo and pull the beat phase back in line. */
+  private syncFollow(now: number): void {
+    const t = this.syncTarget();
+    if (t != null && Math.abs(t - this.tempo) > 1e-5) { this.syncSetting = true; this.tempoF.set(t); this.syncSetting = false; }
+    let bend = 0;
+    const e = this.phaseDiff();
+    // lock only while both play and nobody is nudging by hand
+    if (e != null && this.grid && this.playing && this.other.playing && !this.bend && !this.jogBend && !this.scratching
+      && !this.other.bend && !this.other.jogBend && now - this.jogStamp > 500) {
+      const sec = e * pulseLen(this.grid);
+      if (Math.abs(e) > 0.25) { this.post({ t: 'jump', d: sec * this.sr }); this.pos += sec * this.sr; }
+      else if (Math.abs(sec) > 0.002) bend = clamp(sec * 0.8, -0.01, 0.01);   // closes the gap in about a second
+    }
+    if (bend !== this.syncBend) { this.syncBend = bend; this.applyRate(); }
+  }
+
+  /** Phrase · bar counter and beat LEDs. */
+  private drawCounter(t: number): void {
+    const g = this.grid, ui = this.ui;
+    if (!g || !this.has) { setText(ui.bars, ''); if (ui.leds.childElementCount) ui.leds.innerHTML = ''; return; }
+    const b = barPos(g, t, this.phraseBars);
+    setText(ui.bars, `PHRASE ${b.phrase} · BAR ${b.barInPhrase}/${this.phraseBars}`);
+    ui.bars.classList.toggle('end', b.barInPhrase === this.phraseBars);
+    if (ui.leds.childElementCount !== b.beatsInBar) ui.leds.innerHTML = '<i></i>'.repeat(b.beatsInBar);
+    for (let i = 0; i < b.beatsInBar; i++) ui.leds.children[i].classList.toggle('on', i === b.beat);
+  }
+
   /* ---------- actions ---------- */
   private setPlaying(on: boolean): void {
     this.playing = on;
@@ -446,7 +601,10 @@ export class Deck {
         if (this.cuePreview) { this.cuePreview = false; return; } // CUE held + PLAY = keep playing
         this.setPlaying(!this.playing);
         break;
-      case 'sync': this.sync(); break;
+      case 'sync':
+        if (this.syncOn) { this.syncOn = false; this.syncBend = 0; this.applyRate(); toast(`Deck ${this.id}: SYNC kapalı`); }
+        else this.syncEngage();
+        break;
       case 'keylock':
         this.keyLock = !this.keyLock; this.updateKeylock();
         toast(`Deck ${this.id}: key lock ${this.keyLock ? 'açık (tempo değişse de ton aynı kalır)' : 'kapalı (tempo ile ton da değişir)'}`);
@@ -488,12 +646,15 @@ export class Deck {
       case 'spinback': if (has && this.playing) this.post({ t: 'vinyl', fx: 'spin', dur: 1.0 }); break;
       case 'hot': {
         if (!has) return;
-        const h = this.hot[arg];
-        if (h == null) this.hot[arg] = this.currentTime();
-        else { this.seek(h); if (!this.playing) this.setPlaying(true); }
+        const h = this.hot[arg], t = this.currentTime();
+        if (h == null) { this.hot[arg] = this.qt(t); this.persist(); break; }
+        // quantized jump while playing: land at the same spot within the beat, so the rhythm does not stumble
+        const keep = this.quantize && this.grid && this.playing ? t - snap(this.grid, t) : 0;
+        this.seek(h + keep);
+        if (!this.playing) this.setPlaying(true);
         break;
       }
-      case 'hotDel': this.hot[arg] = null; break;
+      case 'hotDel': this.hot[arg] = null; this.persist(); break;
     }
   }
 
@@ -516,7 +677,7 @@ export class Deck {
     if (this.playing && !this.cuePreview) { this.setPlaying(false); this.seek(this.cuePt); return; }
     const t = this.currentTime();
     if (Math.abs(t - this.cuePt) < 0.02) { this.cuePreview = true; this.setPlaying(true); }
-    else this.cuePt = t;
+    else { this.cuePt = this.qt(t); if (this.cuePt !== t) this.seek(this.cuePt); this.persist(); }
   }
 
   private cueUp(): void {
@@ -537,14 +698,15 @@ export class Deck {
 
   applyRate(): void { this.post({ t: 'tempo', v: this.speed() }); this.updateKeylock(); }
 
-  beatLen(): number { return 60 / (this.bpm || 120); }
+  beatLen(): number { return this.grid ? pulseLen(this.grid) : 60 / (this.bpm || 120); }
 
   beatLoop(beats: number): void {
     if (!this.has) return;
     ensureCtx();
     if (this.loopOn && this.loopBeats === beats) { this.loopOff(); return; }
     this.loopBeats = beats;
-    this.loopS = this.currentTime();
+    // quantized: the loop starts on the nearest beat line
+    this.loopS = this.qt(this.currentTime());
     this.loopE = this.loopS + beats * this.beatLen();
     this.loopOn = true;
     this.sendLoop();
@@ -574,15 +736,6 @@ export class Deck {
     const b = this.loopBeats, s = b < 1 ? '1/' + Math.round(1 / b) : String(b);
     if (this.ui) this.ui.lp.textContent = this.loopOn ? `LOOP ${s} beat` : `loop/jump: ${s}`;
     this.applyFX();
-  }
-
-  sync(): void {
-    const o = this.other, target = o.bpm ? o.bpm * (1 + o.tempo) : null;
-    if (!target || !this.bpm) { toast('SYNC için iki deck\'te de BPM gerekli'); return; }
-    const t = target / this.bpm - 1;
-    if (Math.abs(t) > 0.16) { toast('Tempo farkı ±%16 dışında (BPM\'e tıklayıp ×2/½ dene)'); return; }
-    this.tempoF.set(t);
-    toast(`Deck ${this.id} → ${target.toFixed(1)} BPM`);
   }
 
   applyEQ(): void {
@@ -618,6 +771,8 @@ export class Deck {
     if (this.jogBend && now - this.jogStamp > 90) { this.jogBend = 0; this.applyRate(); }
     // a scratching hand that stops moving holds the record still
     if (this.scratching && !this.scratchIdle && now - this.scratchLast > 35) this.setScratch(true, 0);
+    if (this.syncOn) this.syncFollow(now);
+    this.drawCounter(t);
     ui.platter.style.transform = `rotate(${t * 360 / SEC_PER_REV}deg)`;
     setText(ui.jt, fmt(t));
     setText(ui.jr, '-' + fmt(dur - t));
@@ -627,7 +782,7 @@ export class Deck {
     ui.kl.style.color = this.keyLock ? 'var(--green)' : '';
     setText(ui.ksv, (this.keyShift > 0 ? '+' : '') + this.keyShift);
     ui.ksv.classList.toggle('on', this.keyShift !== 0);
-    const bpm = this.bpm ? (this.bpm * (1 + this.tempo)).toFixed(1) : '—';
+    const bpm = this.bpm ? (this.bpm * (1 + this.tempo)).toFixed(this.bpm % 1 ? 2 : 1) : '—';
     const bpmHtml = `${bpm} <small>BPM</small>`;
     if (ui.bpm.innerHTML !== bpmHtml) ui.bpm.innerHTML = bpmHtml;
 
@@ -637,6 +792,8 @@ export class Deck {
     pl.classList.toggle('blink', !this.playing && this.has);
     this.q('cue').classList.toggle('on', !this.playing && this.has && Math.abs(t - this.cuePt) < 0.05);
     this.q('keylock').classList.toggle('on', this.keyLock);
+    this.q('sync').classList.toggle('on', this.syncOn);
+    this.q('quantize').classList.toggle('on', this.quantize);
     this.q('loop').classList.toggle('on', this.loopOn);
     this.q('vinyl').classList.toggle('on', this.vinyl);
     this.q('slip').classList.toggle('on', this.slip);
@@ -661,7 +818,10 @@ export class Deck {
   private drawWaves(t: number, dur: number): void {
     const c = this.ws, g = c.getContext('2d')!, W = c.width, H = c.height, dpr = devicePixelRatio;
     g.fillStyle = '#0f1114'; g.fillRect(0, 0, W, H);
-    const span = 7, x0 = W / 2, sx = W / span;
+    // 7 s of *real* time across the view: at the same BPM both decks show beats the same width apart
+    const sp = this.playing ? Math.max(0.25, this.speed()) : 1 + this.tempo;
+    const span = 7, x0 = W / 2, sx = W / span / sp;          // pixels per second of track
+    const X = (tt: number) => x0 + (tt - t) * sx;
     if (this.peaks) {
       const p = this.peaks, n = p.length, step = Math.max(1, Math.floor(W / 900));
       for (let x = 0; x < W; x += step) {
@@ -671,15 +831,25 @@ export class Deck {
         g.fillStyle = tt < t ? this.color + '88' : this.color;
         g.fillRect(x, (H - h) / 2, step, h);
       }
-      if (this.bpm) {
-        g.fillStyle = '#ffffff22';
-        const bl = this.beatLen(), first = Math.ceil((t - span / 2) / bl);
-        for (let k = first; k * bl < t + span / 2; k++) g.fillRect(x0 + (k * bl - t) * sx, 0, 1, H);
+      const gr = this.grid;
+      if (gr) {
+        const pl = pulseLen(gr), half = W / 2 / sx;
+        const k0 = Math.ceil((t - half - gr.offset) / pl), k1 = Math.floor((t + half - gr.offset) / pl);
+        const thin = pl * sx < 6 * dpr;                        // too dense: only bar lines
+        for (let k = k0; k <= k1; k++) {
+          const kind = lineKind(gr, k, this.phraseBars);
+          if (thin && kind < 2) continue;
+          const x = X(gr.offset + k * pl);
+          if (kind === 3) { g.fillStyle = '#ff4545cc'; g.fillRect(x - dpr, 0, 2 * dpr, H); }
+          else if (kind === 2) { g.fillStyle = '#ffffffaa'; g.fillRect(x - dpr / 2, 0, dpr * 1.5, H); }
+          else if (kind === 1) { g.fillStyle = '#ffffff70'; g.fillRect(x, 0, dpr, H); }
+          else { g.fillStyle = '#ffffff1c'; g.fillRect(x, H * 0.35, dpr, H * 0.3); }
+        }
       }
     } else { g.fillStyle = '#ffffff22'; g.fillRect(0, H / 2, W, 1); }
-    if (this.loopOn) { g.fillStyle = '#3ce37a30'; g.fillRect(x0 + (this.loopS - t) * sx, 0, (this.loopE - this.loopS) * sx, H); }
+    if (this.loopOn) { g.fillStyle = '#3ce37a30'; g.fillRect(X(this.loopS), 0, (this.loopE - this.loopS) * sx, H); }
     const mark = (tt: number, col: string, w: number) => {
-      const x = x0 + (tt - t) * sx;
+      const x = X(tt);
       if (x >= -2 && x <= W + 2) { g.fillStyle = col; g.fillRect(x - w / 2, 0, w, H); }
     };
     if (dur) {

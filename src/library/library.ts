@@ -3,6 +3,7 @@ import { ensureCtx } from '../engine/context';
 import type { Deck } from '../engine/deck';
 import { DEMOS } from '../demo/synth';
 import { detectBPM } from '../analysis/bpm';
+import { analyzeGrid, type Grid } from '../analysis/grid';
 import { dbAll, dbDelete, dbGet, dbPut } from './db';
 import { AUDIO_EXT, fileSig, matches, sortTracks, stripExt, type SortKey, type Track } from './model';
 
@@ -19,7 +20,7 @@ const W = window as unknown as Picker;
 
 interface Root { id?: number; kind: 'dir' | 'file'; name: string; handle: DirHandle | FileHandle }
 interface RootState { root: Root; perm: PermState; tracks: Track[] }
-interface Cached { bpm: number | null; dur: number }
+interface Cached { bpm: number | null; dur: number; grid?: Grid | null }
 
 const MAX_DEPTH = 6;
 const MAX_ROWS = 600;
@@ -69,7 +70,7 @@ async function applyCache(list: Track[]): Promise<void> {
     if (!f) continue;
     t.sig = fileSig(f);
     const c = await dbGet<Cached>('analysis', t.sig).catch(() => undefined);
-    if (c) { t.bpm = c.bpm; t.dur = c.dur; }
+    if (c) { t.bpm = c.bpm; t.dur = c.dur; t.grid = c.grid ?? null; }
   }
 }
 
@@ -156,18 +157,20 @@ async function analyze(t: Track): Promise<void> {
     const oc = new OfflineAudioContext(1, 1, 44100);
     const buf = await oc.decodeAudioData(await f.arrayBuffer());
     t.dur = buf.duration;
-    t.bpm = detectBPM(buf.getChannelData(0), buf.sampleRate);
+    const ch = buf.getChannelData(0), guess = detectBPM(ch, buf.sampleRate);
+    t.grid = guess ? analyzeGrid(ch, buf.sampleRate, guess) : null;
+    t.bpm = t.grid?.bpm ?? guess;
   } catch {
-    t.dur = 0; t.bpm = null;   // undecodable: mark so it is not retried every time
+    t.dur = 0; t.bpm = null; t.grid = null;   // undecodable: mark so it is not retried every time
   }
-  await dbPut('analysis', { bpm: t.bpm ?? null, dur: t.dur } satisfies Cached, t.sig).catch(() => undefined);
+  await dbPut('analysis', { bpm: t.bpm ?? null, dur: t.dur, grid: t.grid ?? null } satisfies Cached, t.sig).catch(() => undefined);
 }
 
 /** A deck analysed a song itself: remember the result. */
-export function rememberAnalysis(f: File, bpm: number | null, dur: number): void {
+export function rememberAnalysis(f: File, bpm: number | null, dur: number, grid: Grid | null): void {
   const sig = fileSig(f);
-  void dbPut('analysis', { bpm, dur } satisfies Cached, sig).catch(() => undefined);
-  for (const t of allTracks()) if (t.sig === sig) { t.bpm = bpm; t.dur = dur; }
+  void dbPut('analysis', { bpm, dur, grid } satisfies Cached, sig).catch(() => undefined);
+  for (const t of allTracks()) if (t.sig === sig) { t.bpm = bpm; t.dur = dur; t.grid = grid; }
   render();
 }
 
@@ -180,7 +183,7 @@ async function loadTo(t: Track, d: Deck): Promise<void> {
   if (!f) { toast('Dosya açılamadı (taşınmış ya da izin gerekiyor)'); return; }
   t.played = true;
   render();
-  await d.load(f, t.dur ? t.bpm ?? null : undefined);
+  await d.load(f, t.dur ? { bpm: t.bpm ?? null, grid: t.grid ?? null } : undefined);
 }
 
 /* ---------- UI ---------- */

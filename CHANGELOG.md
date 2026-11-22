@@ -11,6 +11,27 @@
 7. Reels çıktısı, hayalet mod, set planlayıcı
 8. Cila ve yayın
 
+## 0.6.0 — Faz 2b · Beatgrid ve gerçek SYNC (2026-11-22)
+### Eklendi
+- **Beatgrid analizi**: tempo 0,01 BPM hassasiyetle, vuruşların yeri, bar başı (1. vuruş) ve 8 barlık phrase başı bulunur. Kütüphane analizi de grid'i hesaplayıp saklar.
+- Dalga formunda **grid çizgileri**: vuruş (ince), bar başı (beyaz), phrase başı (kırmızı). Dalga formu gerçek zamana göre çizilir: aynı tempodaki iki deck'te vuruşlar aynı aralıkta görünür.
+- **Bar / phrase sayacı** ("PHRASE 2 · BAR 5/8") ve vuruş ışıkları (ilk vuruş kırmızı). Phrase'in son barında sayaç sarı olur. Sayaca tıklayınca phrase uzunluğu 4 / 8 / 16 / 32 bar.
+- **Gerçek SYNC**: tempoyu eşitler, vuruşları üst üste getirir ve kilitler. Diğer deck'in temposu değişince takip eder; elle dürtünce (bend / jog) bırakınca kendini geri hizalar. Tekrar basınca kapanır; tempo fader'ını elle oynatınca kapanır. Yarım/çift tempoyu (ör. 70 ↔ 140) kendisi katlar.
+- **FAZ göstergesi** (dalga formlarının arasında): B'nin vuruşları A'ya göre kaç ms önde/geride. Yeşil = hizalı.
+- **QUANTIZE** (deck başına, varsayılan açık): cue, hot cue ve loop başlangıcı en yakın vuruşa oturur. Çalarken hot cue'ya atlayınca ritim tökezlemez (vuruş içindeki yer korunur).
+- **Grid düzenleme** (GRID satırı): ◁ ▷ grid'i 5 ms kaydırır (Shift+tık 1 ms), **1.1** çalan yerdeki vuruşu bar ve phrase başı yapar, **BPM− / BPM+** ±0,05 (Shift+tık ±0,01).
+- **Türk müziği ölçüleri**: 4/4 · 6/8 · 7/8 aksak (2+2+3) · 9/8 aksak (2+2+2+3) · 10/8 aksak (3+2+2+3). Aksak ölçülerde vuruş ışıkları ve çizgiler eşit olmayan vuruşları gösterir; BPM sekizlik vuruş sayısıdır.
+- **Şarkıyla saklananlar**: grid (elle düzeltmeler dahil), cue noktası ve hot cue'lar. Şarkıyı tekrar yükleyince geri gelir; cue noktasından başlar.
+- Testler: tempo/vuruş/bar/phrase bulma (sentetik ritimler ve demo parçalar), bar sayacı, aksak ölçü çizgileri, grid düzenleme (toplam 40 test).
+
+### Ölçüldü
+- Sentetik ritimlerde vuruş yeri 0–0,7 ms, demo parçalarda ~2 ms sapma; tempo hatası ≤ 0,001 BPM.
+- Tarayıcıda: B 133 ms kaydırılıp SYNC'e basılınca fark 0 ms. A'nın temposu +%3 yapılınca B takip etti (125,66 = 125,66), fark 0,4 ms. Elle 16 ms kaydırınca kilit 2,5 saniyede 2 ms'ye çekti. Quantize'lı hot cue atlaması sonrası fark 0,7 ms.
+
+### Bilinen eksikler
+- Analiz tempo değişmeyen müzik varsayar (canlı kayıtlarda grid kayabilir, elle düzeltilebilir).
+- Bar başı tahmini sesteki değişimlere bakar; yanlışsa **1.1** ile düzelt.
+
 ## 0.5.0 — Faz 2a · Kütüphane (2026-11-22)
 ### Eklendi
 - Deck'lerin altında **KÜTÜPHANE**:

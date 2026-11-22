@@ -63,7 +63,18 @@ export function initApp(): void {
     grBar.style.width = Math.min(100, grDb / 12 * 100) + '%';
     setText(grTxt, (grDb > 0.05 ? '-' : '') + grDb.toFixed(1) + ' dB');
   };
-  const loop = (now: number) => { decks.forEach(d => d.frame(now)); meter(now); requestAnimationFrame(loop); };
+  // phase meter: how far deck B's beats are from deck A's (in ms of real time)
+  const phI = $('#phI'), phT = $('#phT');
+  const phase = () => {
+    const a = decks[0], e = a.phaseDiff();
+    if (e == null || !a.grid) { phI.style.display = 'none'; setText(phT, '—'); return; }
+    const ms = e * 60 / a.grid.bpm / a.speed() * 1000, ok = Math.abs(ms) < 8;
+    phI.style.display = '';
+    phI.style.left = 50 + e * 100 + '%';
+    phI.className = ok ? 'ok' : Math.abs(ms) < 25 ? 'near' : '';
+    setText(phT, ok ? 'hizalı' : `B ${Math.abs(ms).toFixed(0)} ms ${ms > 0 ? 'önde' : 'geride'}`);
+  };
+  const loop = (now: number) => { decks.forEach(d => d.frame(now)); meter(now); phase(); requestAnimationFrame(loop); };
   requestAnimationFrame(loop);
 
   setupKeyboard(decks, {

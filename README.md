@@ -2,7 +2,7 @@
 
 Tarayıcıda çalışan, klavye ve mouse ile kontrol edilen DJ uygulaması. Hedef: profesyonel bir DJ yazılımı + DJ'liği adım adım öğreten bir akademi + restoran setleri için özel modlar.
 
-> Durum: **Faz 1 tamam** — yeni ses motoru, master limiter, demo parçalar, key lock, ton kaydırma, kulaklık cue ve çıkış ayarları. Yol haritası için [CHANGELOG.md](CHANGELOG.md).
+> Durum: **Faz 2b tamam** — ses motoru, kulaklık cue, kütüphane, beatgrid, gerçek SYNC (vuruş kilidi), quantize, Türk ritimleri için ölçü seçimi. Yol haritası için [CHANGELOG.md](CHANGELOG.md).
 
 ## Gerekenler
 - Windows'ta **Node.js 20 veya üstü** (kontrol: `node -v`)
@@ -64,7 +64,7 @@ legacy/      ilk tek dosyalık sürüm (referans için)
 | Hot cue 1–4 (⇧ = sil) | 1 2 3 4 | 7 8 9 0 |
 | Çal / Durdur (⇧ = şarkı yükle) | Q | Y |
 | CUE — basılı tut = dinle (⇧ = BRAKE) | W | U |
-| SYNC (⇧ = Key Lock) | E | I |
+| SYNC — tempo + vuruş kilidi, tekrar bas = kapat (⇧ = Key Lock) | E | I |
 | Loop aç/kapat (⇧ = VINYL modu) | R | O |
 | Loop ×2 (⇧ = ½) | T | P |
 | Tempo − / + (⇧ = kanal fader) | A / S | H / J |
@@ -86,6 +86,12 @@ Jog: VINYL açıkken iç kısmı tutup çevirmek = scratch; dış halka = tempo 
 - **+ Klasör** ile müzik klasörünü ekle; Chrome/Edge klasörü hatırlar. Şarkılar arka planda analiz edilir (BPM, süre).
 - Satırdaki **A** / **B** ile o deck'e yükle, çift tıkla boştaki deck'e yükle. Üstteki kutuda ara (BPM de yazabilirsin, ör. `124`).
 - Dosyaların kopyası alınmaz; kütüphane sadece nerede olduklarını hatırlar. Klasörü taşırsan yeniden ekle.
+
+## Beatgrid ve SYNC
+- Dalga formundaki çizgiler: ince = vuruş, beyaz = bar başı, kırmızı = phrase başı. Deck'teki sayaç hangi phrase ve barda olduğunu gösterir (tıkla: 4/8/16/32 bar).
+- **SYNC** tempoyu eşitler ve vuruşları kilitler. Dalga formlarının arasındaki **FAZ** çubuğu yeşil ve ortadaysa vuruşlar üst üste.
+- Grid yanlışsa GRID satırı: ◁ ▷ kaydır, **1.1** = "bu vuruş bar başı", BPM− / BPM+. Ölçü butonu: 4/4, 6/8, 7/8, 9/8, 10/8 (aksak ritimler için). Düzeltmeler şarkıyla birlikte saklanır.
+- **QUANT** açıkken hot cue, cue ve loop vuruşa oturur.
 
 ## Kulaklık
 - Her kanaldaki **🎧 CUE** o kanalı kulaklığa gönderir (fader'dan önce, yani kanal kapalıyken de duyulur).

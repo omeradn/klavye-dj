@@ -20,6 +20,9 @@
 
 <div class="waves">
   <div class="wrow"><div class="wlab" style="color:var(--a)">A</div><div class="wcan"><canvas class="scroll" id="wsA"></canvas><canvas class="ov" id="woA"></canvas></div></div>
+  <div class="phase" title="Faz: iki deck'in vuruşları ne kadar kayık. Ortada ve yeşil = vuruşlar üst üste">
+    <span class="plab">FAZ</span><div class="pm"><b></b><i id="phI"></i></div><span id="phT">—</span>
+  </div>
   <div class="wrow"><div class="wlab" style="color:var(--b)">B</div><div class="wcan"><canvas class="scroll" id="wsB"></canvas><canvas class="ov" id="woB"></canvas></div></div>
 </div>
 

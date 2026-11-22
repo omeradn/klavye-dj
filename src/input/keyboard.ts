@@ -15,7 +15,7 @@ export const BIND: Bind[] = [
   ['censor', 'IntlBackslash', 'Slash', 0, 'CENSOR (basılı tut)', 'h'], ['spinback', 'IntlBackslash', 'Slash', 1, 'SPIN (geri savurup dur)'],
   ['keyUp', 'Backquote', 'BracketRight', 0, 'Ton +1 yarım ses'], ['keyDown', 'Backquote', 'BracketRight', 1, 'Ton −1 yarım ses'],
   ['jumpFwd', 'Digit5', 'Digit6', 0, 'Beat jump ileri (loop boyu kadar)'], ['jumpBack', 'Digit5', 'Digit6', 1, 'Beat jump geri'],
-  ['sync', 'KeyE', 'KeyI', 0, 'SYNC (diğer deck\'in BPM\'ine eşitle)'], ['keylock', 'KeyE', 'KeyI', 1, 'Key Lock'],
+  ['sync', 'KeyE', 'KeyI', 0, 'SYNC (tempo + vuruş kilidi · tekrar bas = kapat)'], ['keylock', 'KeyE', 'KeyI', 1, 'Key Lock'],
   ['loop', 'KeyR', 'KeyO', 0, 'Loop aç / kapat'], ['loopDouble', 'KeyT', 'KeyP', 0, 'Loop ×2'], ['loopHalf', 'KeyT', 'KeyP', 1, 'Loop ½'],
   ['tempoDown', 'KeyA', 'KeyH', 0, 'Tempo −', 'r'], ['tempoUp', 'KeyS', 'KeyJ', 0, 'Tempo +', 'r'],
   ['bendDown', 'KeyD', 'KeyK', 0, 'Pitch bend − (basılı tut)', 'h'], ['bendUp', 'KeyF', 'KeyL', 0, 'Pitch bend + (basılı tut)', 'h'],

@@ -1,8 +1,8 @@
 /** Tiny IndexedDB wrapper for the library (folder handles + analysis cache). */
 
 const DB_NAME = 'klavye-dj';
-const DB_VER = 1;
-export type StoreName = 'roots' | 'analysis';
+const DB_VER = 2;
+export type StoreName = 'roots' | 'analysis' | 'tracks';
 
 let dbp: Promise<IDBDatabase> | null = null;
 
@@ -13,6 +13,7 @@ function open(): Promise<IDBDatabase> {
       const db = r.result;
       if (!db.objectStoreNames.contains('roots')) db.createObjectStore('roots', { keyPath: 'id', autoIncrement: true });
       if (!db.objectStoreNames.contains('analysis')) db.createObjectStore('analysis');
+      if (!db.objectStoreNames.contains('tracks')) db.createObjectStore('tracks');
     };
     r.onsuccess = () => res(r.result);
     r.onerror = () => rej(r.error);

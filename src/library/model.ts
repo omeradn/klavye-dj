@@ -1,4 +1,5 @@
 /** Pure library helpers (no DOM / storage) so they can be unit-tested. */
+import type { Grid } from '../analysis/grid';
 
 export const AUDIO_EXT = /\.(mp3|wav|m4a|aac|ogg|oga|opus|flac|aiff?|webm)$/i;
 
@@ -10,6 +11,7 @@ export interface Track {
   /** analysis cache key */
   sig?: string;
   bpm?: number | null;
+  grid?: Grid | null;
   dur?: number;
   /** built-in demo index */
   demo?: number;
