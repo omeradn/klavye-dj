@@ -4,6 +4,8 @@ import { engine, ensureCtx, ramp } from './context';
 import { phonesAudible } from './output';
 import { JUMP_BEATS, KEY_SEMIS, LOOP_BEATS, PAD_MODES, padLabel, ROLL_BEATS, sliceBase, type PadMode } from './padmodes';
 import { loadUserSample, playSample, resetSample, sampler } from './sampler';
+import { CHAN_FX, chanFx, crushCurve, cutoff } from './chanfx';
+import { impulse } from './beatfx';
 import { detectBPM } from '../analysis/bpm';
 import {
   analyzeGrid, barPos, downbeatAt, lineKind, METER_ORDER, METERS, phaseAt, pulseLen, setBpmAt, snap, wrapHalf, type Grid,
@@ -130,7 +132,11 @@ export class Deck {
   private wiring?: Promise<void>;
   trim?: GainNode;
   lo?: BiquadFilterNode; mid?: BiquadFilterNode; hi?: BiquadFilterNode; fil?: BiquadFilterNode;
-  chGain?: GainNode; cueG?: GainNode; xfG?: GainNode; fxSend?: GainNode; fb?: GainNode;
+  chGain?: GainNode; cueG?: GainNode; xfG?: GainNode;
+  /** Ritim FX insert point (between channel fader and crossfader) */
+  insIn?: GainNode; insOut?: GainNode;
+  /** Kanal FX paths */
+  private cfx?: { dry: GainNode; spSend: GainNode; spFilt: BiquadFilterNode; crush: WaveShaperNode; crFilt: BiquadFilterNode; crWet: GainNode; nFilt: BiquadFilterNode; nGain: GainNode; steps: number }; fxSend?: GainNode; fb?: GainNode;
   delay?: DelayNode;
   an?: AnalyserNode;
   anBuf = new Float32Array(1024);
@@ -353,7 +359,11 @@ export class Deck {
     this.hiK = new Knob(c, { min: -26, max: 6, def: 0, label: 'HI', onchange: () => this.applyEQ(), onreset: clearKill('hi') });
     this.midK = new Knob(c, { min: -26, max: 6, def: 0, label: 'MID', onchange: () => this.applyEQ(), onreset: clearKill('mid') });
     this.loK = new Knob(c, { min: -26, max: 6, def: 0, label: 'LOW', onchange: () => this.applyEQ(), onreset: clearKill('lo') });
-    this.filK = new Knob(c, { min: -1, max: 1, def: 0, label: 'FILTER', onchange: v => this.applyFilter(v) });
+    this.filK = new Knob(c, { min: -1, max: 1, def: 0, label: 'FİLTRE', onchange: v => this.applyFilter(v) });
+    chanFx.listeners.push(() => {
+      setText(this.filK.w.querySelector('span')!, CHAN_FX.find(x => x.id === chanFx.type)!.label);
+      this.applyFilter(this.filK.v);
+    });
 
     const fx = document.createElement('div'); fx.className = 'fxrow'; c.appendChild(fx);
     this.fxBtn = document.createElement('button'); this.fxBtn.className = 'b'; this.fxBtn.dataset.a = 'fx'; this.fxBtn.textContent = 'ECHO';
@@ -424,9 +434,28 @@ export class Deck {
     this.fxSend = C.createGain(); this.fxSend.gain.value = 0;
     this.delay = C.createDelay(4); this.fb = C.createGain(); this.fb.gain.value = 0.45;
     this.an = C.createAnalyser(); this.an.fftSize = 1024;
-    this.klMix.connect(this.trim).connect(this.lo).connect(this.mid).connect(this.hi).connect(this.fil).connect(this.chGain);
-    this.chGain.connect(this.xfG); this.chGain.connect(this.an);
-    if (engine.cueBus) this.fil.connect(this.cueG).connect(engine.cueBus);
+    // Kanal FX: dry + space (reverb send) + crush (bit reduction) + noise, all summed before the fader
+    const g = (v = 0) => { const x = C.createGain(); x.gain.value = v; return x; };
+    const sum = g(1), dry = g(1), spSend = g(), conv = C.createConvolver(), spFilt = C.createBiquadFilter();
+    const crush = C.createWaveShaper(), crFilt = C.createBiquadFilter(), crWet = g();
+    const nFilt = C.createBiquadFilter(), nGain = g();
+    conv.buffer = impulse(C, 1.8);
+    crush.curve = crushCurve(16) as Float32Array<ArrayBuffer>;
+    const nb = C.createBuffer(1, C.sampleRate * 2, C.sampleRate), nd = nb.getChannelData(0);
+    let seed = this.i + 7;
+    for (let i = 0; i < nd.length; i++) { seed = (seed * 16807) % 2147483647; nd[i] = (seed / 2147483647) * 2 - 1; }
+    const noise = C.createBufferSource(); noise.buffer = nb; noise.loop = true; noise.start();
+    this.klMix.connect(this.trim).connect(this.lo).connect(this.mid).connect(this.hi).connect(this.fil);
+    this.fil.connect(dry).connect(sum);
+    this.fil.connect(spSend).connect(conv).connect(spFilt).connect(sum);
+    this.fil.connect(crush).connect(crFilt).connect(crWet).connect(sum);
+    noise.connect(nFilt).connect(nGain).connect(sum);
+    sum.connect(this.chGain);
+    this.cfx = { dry, spSend, spFilt, crush, crFilt, crWet, nFilt, nGain, steps: 16 };
+    // Ritim FX can be inserted between the channel fader and the crossfader
+    this.insIn = g(1); this.insOut = g(1);
+    this.chGain.connect(this.insIn).connect(this.insOut).connect(this.xfG); this.chGain.connect(this.an);
+    if (engine.cueBus) sum.connect(this.cueG).connect(engine.cueBus);
     this.xfG.connect(engine.bus);
     this.xfG.connect(this.fxSend).connect(this.delay);
     this.delay.connect(this.fb).connect(this.delay);
@@ -923,13 +952,30 @@ export class Deck {
     ramp(this.lo.gain, k.lo ? -40 : this.loK.v, 0.005);
   }
 
+  /** The channel FX knob: FİLTRE, SPACE, NOISE or CRUSH (chosen for both channels in the FX bar). */
   applyFilter(v: number): void {
-    const f = this.fil;
-    if (!f) return;
-    if (Math.abs(v) < 0.03) { f.type = 'lowpass'; ramp(f.frequency, 22000); f.Q.value = 0.7; }
-    else if (v < 0) { f.type = 'lowpass'; ramp(f.frequency, 20000 * Math.pow(150 / 20000, -v)); f.Q.value = 1.2; }
-    else { f.type = 'highpass'; ramp(f.frequency, 20 * Math.pow(6000 / 20, v)); f.Q.value = 1.2; }
+    const f = this.fil, x = this.cfx;
+    if (!f || !x) return;
+    const type = chanFx.type, a = Math.abs(v) < 0.03 ? 0 : Math.abs(v), c = cutoff(v);
+    const set = (bq: BiquadFilterNode, q: number) => { bq.type = c.type; ramp(bq.frequency, c.f); bq.Q.value = q; };
+    // the main filter works only in FİLTRE mode
+    if (type === 'filter') set(f, a ? 1.2 : 0.7); else { f.type = 'lowpass'; ramp(f.frequency, 22000); f.Q.value = 0.7; }
+    ramp(x.spSend.gain, type === 'space' ? a * 1.2 : 0, 0.02);
+    if (type === 'space') set(x.spFilt, 0.7);
+    const cr = type === 'crush' ? a : 0;
+    ramp(x.dry.gain, 1 - cr, 0.01); ramp(x.crWet.gain, cr, 0.01);
+    if (type === 'crush') {
+      set(x.crFilt, 0.7);
+      const steps = Math.max(2, Math.round(48 * (1 - a) ** 2 + 2));
+      if (steps !== x.steps) { x.steps = steps; x.crush.curve = crushCurve(steps) as Float32Array<ArrayBuffer>; }
+    }
+    if (type === 'noise') set(x.nFilt, 0.9);
+    this.noiseLevel = type === 'noise' ? a * 0.18 : 0;
+    ramp(x.nGain.gain, this.playing ? this.noiseLevel : 0, 0.02);
   }
+  /** noise only sounds while the deck plays */
+  private noiseLevel = 0;
+  private noiseOn = false;
 
   applyFX(): void {
     this.fxBtn?.classList.toggle('on', this.fxOn);
@@ -945,6 +991,10 @@ export class Deck {
     // a scratching hand that stops moving holds the record still
     if (this.scratching && !this.scratchIdle && now - this.scratchLast > 35) this.setScratch(true, 0);
     if (this.syncOn) this.syncFollow(now);
+    if (this.cfx && this.noiseOn !== (this.playing && this.noiseLevel > 0)) {
+      this.noiseOn = this.playing && this.noiseLevel > 0;
+      ramp(this.cfx.nGain.gain, this.noiseOn ? this.noiseLevel : 0, 0.05);
+    }
     this.drawCounter(t);
     ui.platter.style.transform = `rotate(${t * 360 / SEC_PER_REV}deg)`;
     setText(ui.jt, fmt(t));

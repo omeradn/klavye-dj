@@ -1,6 +1,7 @@
 import deckWorkletUrl from './worklets/deck-processor.ts?worker&url';
 import limiterWorkletUrl from './worklets/limiter-processor.ts?worker&url';
 import keylockMixWorkletUrl from './worklets/keylock-mix-processor.ts?worker&url';
+import beatFxWorkletUrl from './worklets/beatfx-processor.ts?worker&url';
 import type { LimiterStats } from './worklets/protocol';
 import { audioSettings, LATENCY_HINT } from './settings';
 
@@ -15,12 +16,15 @@ export const engine: {
   bus: GainNode | null;
   /** sum of the channels whose headphone CUE is on (pre-fader) */
   cueBus: GainNode | null;
+  /** master insert point for the Ritim FX unit (bus -> fxIn -> fxOut -> master) */
+  fxIn: GainNode | null;
+  fxOut: GainNode | null;
   master: GainNode | null;
   limiter: AudioWorkletNode | null;
   ready: Promise<void> | null;
   meter: { gr: number; peakIn: number; peakOut: number; overAt: number; limitAt: number };
 } = {
-  ctx: null, bus: null, cueBus: null, master: null, limiter: null, ready: null,
+  ctx: null, bus: null, cueBus: null, fxIn: null, fxOut: null, master: null, limiter: null, ready: null,
   meter: { gr: 1, peakIn: 0, peakOut: 0, overAt: -1e9, limitAt: -1e9 },
 };
 
@@ -41,11 +45,14 @@ export function ensureCtx(): AudioContext {
   engine.bus = ctx.createGain();
   engine.cueBus = ctx.createGain();
   engine.master = ctx.createGain();
-  engine.bus.connect(engine.master);
+  engine.fxIn = ctx.createGain();
+  engine.fxOut = ctx.createGain();
+  engine.bus.connect(engine.fxIn).connect(engine.fxOut).connect(engine.master);
   engine.ready = (async () => {
     await ctx.audioWorklet.addModule(deckWorkletUrl);
     await ctx.audioWorklet.addModule(limiterWorkletUrl);
     await ctx.audioWorklet.addModule(keylockMixWorkletUrl);
+    await ctx.audioWorklet.addModule(beatFxWorkletUrl);
     const lim = new AudioWorkletNode(ctx, 'limiter', { numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [2] });
     lim.port.onmessage = e => {
       const s = e.data as LimiterStats, m = engine.meter, now = performance.now();

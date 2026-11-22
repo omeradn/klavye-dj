@@ -49,6 +49,31 @@
   <section class="deck B" id="deckB"></section>
 </div>
 
+<section class="fxbar">
+  <div class="fxu">
+    <b>RİTİM FX</b><i id="fxLed" title="Efektin takip ettiği vuruş"></i>
+    <button class="b sm" id="fxPrev" title="Önceki efekt (⇧ + ,)">◀</button>
+    <span class="fxn" id="fxName">ECHO</span>
+    <button class="b sm" id="fxNext" title="Sonraki efekt ( , )">▶</button>
+    <span class="lbl">VURUŞ</span>
+    <button class="b sm" id="fxHalf" title="Yarıya indir ( * )">½</button>
+    <span class="fxv" id="fxBeats">3/4</span>
+    <button class="b sm" id="fxDouble" title="İki katına çıkar ( - )">×2</button>
+    <span class="lbl">HEDEF</span>
+    <span class="seg" id="fxTarget" title="Efekt hangi sese uygulanacak (⇧B ile değiştir)"><button data-t="A">A</button><button data-t="B">B</button><button data-t="M">MASTER</button></span>
+    <div id="fxLevelK"></div><span class="fxv" id="fxVal">%60</span>
+    <button class="b red" id="fxOn" title="Efekti aç / kapat (B)">ON</button>
+    <span class="note" id="fxBpm">120.0 BPM</span>
+  </div>
+  <div class="fxu">
+    <b>KANAL FX</b>
+    <button class="b sm" id="cfxPrev" title="Önceki (⇧↑)">◀</button>
+    <span class="fxn" id="cfxName">FİLTRE</span>
+    <button class="b sm" id="cfxNext" title="Sonraki (↑)">▶</button>
+    <span class="note">Kanallardaki düğme (⇧D / ⇧F, ⇧G ortala)</span>
+  </div>
+</section>
+
 <section class="lib">
   <div class="lbar">
     <b>KÜTÜPHANE</b>

@@ -5,7 +5,7 @@ Fazların asıl numaraları brief'tekiyle aynı; burada çalışma sırasıyla l
 1. **Faz 0** Kurulum ve taşıma ✅
 2. **Faz 1** Ses motoru ✅ — 1a worklet, limiter, demo · 1b key lock · 1c kulaklık cue
 3. **Faz 2** Analiz ve kütüphane ✅ — 2a kütüphane · 2b beatgrid + SYNC · 2c ton, renkli dalga formu, listeler
-4. **Faz 3** Mikser, efektler, pad'ler (öne alındı) — 3a pad modları + sampler ✅ · 3b Ritim FX + Kanal FX · 3c mikser ekstraları
+4. **Faz 3** Mikser, efektler, pad'ler (öne alındı) — 3a pad modları + sampler ✅ · 3b Ritim FX + Kanal FX ✅ · 3c mikser ekstraları
 5. **Yayın**: GitHub'a yükleme + canlı site (GitHub Pages), her güncellemede testler ve otomatik yayın (3b'den sonra)
 6. **Faz 4** DJ Akademi — set senaryosu oynatıcı ve **hayalet eller** (kullanılan kontrol parlar, Türkçe açıklama: "önce izle, sonra sen yap") dahil
 7. **Faz 6a** Restoran Modu, set kaydı, canlı koç, geçiş asistanı
@@ -13,6 +13,25 @@ Fazların asıl numaraları brief'tekiyle aynı; burada çalışma sırasıyla l
 9. **Faz 6b** Reels çıktısı, hayalet mod, set planlayıcı
 10. **Ajan DJ** (yeni faz): Claude şarkıları analiz edip vuruşa oturan bir set senaryosu yazar, uygulama canlı çalar, her hamle ekranda görünür; geçişler arasında Claude planı günceller. Canlı yayınlar için (cd.md parçaları)
 11. **Faz 7** Cila ve yayın
+
+## 0.9.0 — Faz 3b · Ritim FX ve Kanal FX (2026-11-22)
+### Eklendi
+- **RİTİM FX** çubuğu (deck'lerin altında): tempoya senkron tek efekt ünitesi.
+  - 10 efekt: ECHO, REVERB, FLANGER, PHASER, ROLL, GATE, SPİRAL, SWEEP, PITCH, FREN.
+  - **VURUŞ**: 1/16'dan 16 vuruşa (efektin hızı ya da uzunluğu); her efektin kendi varsayılanı var.
+  - **HEDEF**: A, B ya da MASTER. Deck'e uygulanınca kanal fader'ından sonra, crossfader'dan önce girer.
+  - **SEVİYE**: çoğu efektte miktar; PITCH'te −12…+12 yarım ses; GATE'te derinlik.
+  - Tempo, hedef deck'in grid'inden her an okunur (MASTER'da salonda duyulan deck). Turuncu ışık efektin takip ettiği vuruşta yanar.
+  - ECHO, REVERB ve SPİRAL kapatılınca kuyruk doğal söner. ROLL son grid çizgisinden başlar. GATE, FLANGER, PHASER ve SWEEP vuruşa hizalı başlar.
+- **KANAL FX**: her kanaldaki FİLTRE düğmesi seçilen efekte dönüşür: FİLTRE · SPACE (yankılı boşluk) · NOISE (rüzgâr gürültüsü) · CRUSH (bozma). Ortada kapalı; sola koyu, sağa parlak. Kulaklık CUE'su Kanal FX'i de duyurur.
+- Klavye: **B** Ritim FX aç/kapa · **⇧B** hedef · **,** sonraki efekt (⇧ önceki) · **\*** vuruş ½ · **-** vuruş ×2 · **İ** seviye + (⇧ −) · **↑** Kanal FX türü (⇧ önceki).
+- Ses motoru: ROLL / GATE / FREN / PITCH için yeni efekt çekirdeği (8 saniyelik geçmiş tamponu, 5 ms yumuşak açılış-kapanış).
+- Testler: gate'in grid'e oturduğu, roll'un son vuruştan tekrar edip bırakınca müziğe döndüğü, frenin durduğu, pitch +12'nin frekansı ikiye katladığı (toplam 68 test).
+
+### Ölçüldü (tarayıcıda)
+- GATE 1/4 vuruş: kapalı yarımlar grid'e hizalı, ses −56 dB.
+- ECHO 3/4 vuruş: 122 BPM'de 0,369 s; tempo +%4 olunca 0,355 s (tempoyu takip ediyor).
+- 10 efektin hepsi açıldı-kapandı, master limiter'da kırmızı (clip) olmadı.
 
 ## 0.8.0 — Faz 3a · Performans pad'leri ve sampler (2026-11-22)
 ### Eklendi

@@ -52,3 +52,10 @@ describe('sampler sounds', () => {
     }
   });
 });
+
+describe('beat labels', () => {
+  it('writes fractions of a beat', async () => {
+    const { beatsLabel } = await import('../src/engine/padmodes');
+    expect([1 / 16, 0.25, 0.5, 0.75, 1, 16].map(beatsLabel)).toEqual(['1/16', '1/4', '1/2', '3/4', '1', '16']);
+  });
+});

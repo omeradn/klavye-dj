@@ -23,7 +23,7 @@ export const KEY_SEMIS = [1, 2, 3, 4, 0, -1, -2, -3];
 /** Slicer: 8 slices of 1 beat each. */
 export const SLICES = 8;
 
-export const beatsLabel = (b: number): string => b >= 1 ? String(b) : '1/' + Math.round(1 / b);
+export const beatsLabel = (b: number): string => b >= 1 ? String(b) : Math.abs(b - 0.75) < 1e-6 ? '3/4' : '1/' + Math.round(1 / b);
 
 export function padLabel(mode: PadMode, i: number, extra?: { sample?: string }): string {
   switch (mode) {

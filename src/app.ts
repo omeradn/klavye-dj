@@ -11,6 +11,8 @@ import { buildOutput, outputNodes, phones, setCueMix, setPhonesLevel, setSplit }
 import { settingsOpen, setupSettings, toggleSettings } from './ui/settings';
 import { setupLibrary } from './library/library';
 import { buildSampler, sampler, setSamplerLevel } from './engine/sampler';
+import { buildFxPoints } from './engine/beatfx';
+import { chanFxNext, fxBeats, fxFrame, fxLevel, fxNext, fxTarget, fxToggle, setupFxBar, wireFx } from './ui/fxbar';
 
 let started = false;
 
@@ -44,11 +46,13 @@ export function initApp(): void {
   // output first: decks connect to the cue bus it listens to
   onCtxCreated(ctx => buildOutput(ctx));
   onCtxCreated(ctx => buildSampler(ctx));
+  onCtxCreated(() => buildFxPoints());
   new Knob($('#sampK'), { min: 0, max: 1, def: sampler.level, onchange: setSamplerLevel });
   onCtxCreated(async () => {
     engine.master!.gain.value = masterK.v;
     await Promise.all(decks.map(d => d.wire()));
     mixer.apply();
+    wireFx();
   });
 
   const resize = () => document.querySelectorAll('canvas').forEach(c => {
@@ -84,7 +88,7 @@ export function initApp(): void {
     phI.className = ok ? 'ok' : Math.abs(ms) < 25 ? 'near' : '';
     setText(phT, ok ? 'hizalı' : `B ${Math.abs(ms).toFixed(0)} ms ${ms > 0 ? 'önde' : 'geride'}`);
   };
-  const loop = (now: number) => { decks.forEach(d => d.frame(now)); meter(now); phase(); requestAnimationFrame(loop); };
+  const loop = (now: number) => { decks.forEach(d => d.frame(now)); meter(now); phase(); fxFrame(); requestAnimationFrame(loop); };
   requestAnimationFrame(loop);
 
   setupKeyboard(decks, {
@@ -96,11 +100,19 @@ export function initApp(): void {
     Escape: () => { if (settingsOpen()) toggleSettings(false); else toggleHelp(); },
     F1: () => toggleHelp(),
     F2: () => toggleSettings(),
+    // RİTİM FX / KANAL FX (keys between and around the decks)
+    KeyB: e => { if (e.repeat) return; if (e.shiftKey) fxTarget(); else fxToggle(); },
+    Backslash: e => { if (!e.repeat) fxNext(e.shiftKey ? -1 : 1); },
+    Minus: e => { if (!e.repeat) fxBeats(-1); },
+    Equal: e => { if (!e.repeat) fxBeats(1); },
+    Quote: e => fxLevel(e.shiftKey ? -1 : 1),
+    ArrowUp: e => { if (!e.repeat) chanFxNext(e.shiftKey ? -1 : 1); },
   });
 
   // dev-only handle for debugging in the browser console (not in production builds)
   if (import.meta.env.DEV) (window as unknown as Record<string, unknown>).kdj = { decks, engine, mixer, out: outputNodes };
 
+  setupFxBar(decks);
   setupBadges(decks);
   setupSettings();
   void setupLibrary(decks);

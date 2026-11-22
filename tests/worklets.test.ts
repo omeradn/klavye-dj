@@ -17,6 +17,7 @@ beforeAll(async () => {
   await import('../src/engine/worklets/deck-processor');
   await import('../src/engine/worklets/limiter-processor');
   await import('../src/engine/worklets/keylock-mix-processor');
+  await import('../src/engine/worklets/beatfx-processor');
 });
 
 /** Render with all deck outputs: main L, wet weight, look-ahead L. */
@@ -242,5 +243,79 @@ describe('limiter', () => {
     const out = render(p, 50, x);
     const look = Math.round(0.003 * SR);
     for (let i = 1000; i < 1100; i++) expect(out[i]).toBeCloseTo(x(i - look), 5);
+  });
+});
+
+describe('beat FX', () => {
+  /** Render with the worklet clock advancing; input(t) in seconds; returns left output. */
+  function run(p: any, from: number, sec: number, input: (t: number) => number): Float32Array {
+    const g = globalThis as any, blocks = Math.round(sec * SR / 128), out = new Float32Array(blocks * 128);
+    for (let b = 0; b < blocks; b++) {
+      const t0 = from + b * 128 / SR;
+      g.currentTime = t0;
+      const x = new Float32Array(128);
+      for (let i = 0; i < 128; i++) x[i] = input(t0 + i / SR);
+      const oL = new Float32Array(128), oR = new Float32Array(128);
+      p.process([[x, x]], [[oL, oR]], {});
+      out.set(oL, b * 128);
+    }
+    g.currentTime = 0;
+    return out;
+  }
+  const fx = (mode: string, on: boolean, extra: Record<string, number> = {}) =>
+    ({ mode, on, beat: 0.5, anchor: 0, len: 1, amount: 1, ...extra });
+  const zc = (a: Float32Array, from: number, to: number) => {
+    let c = 0;
+    for (let i = Math.max(1, from); i < to; i++) if ((a[i - 1] < 0) !== (a[i] < 0)) c++;
+    return c / 2 / ((to - from) / SR);
+  };
+
+  it('GATE cuts the second half of every step, on the grid', () => {
+    const p = new registry.beatfx();
+    send(p, fx('gate', true, { len: 0.25 }));                      // 1/4 beat = 125 ms steps
+    const out = run(p, 0, 1, () => 0.5);
+    for (let k = 1; k < 7; k++) {
+      expect(out[Math.round((k * 0.125 + 0.03) * SR)]).toBeCloseTo(0.5, 2);   // open
+      expect(Math.abs(out[Math.round((k * 0.125 + 0.095) * SR)])).toBeLessThan(0.01); // closed
+    }
+  });
+
+  it('ROLL repeats the segment since the last grid line, then lets the song through again', () => {
+    const p = new registry.beatfx();
+    const time = (t: number) => t;                                 // the input "says" what time it is
+    run(p, 0, 1.1, time);
+    send(p, fx('roll', true, { len: 0.5 }));                       // 0.25 s segment; last line at 1.0 s
+    const out = run(p, 1.1, 0.6, time);
+    const v = Array.from(out.slice(Math.round(0.2 * SR)));        // after the glide in
+    expect(Math.min(...v)).toBeGreaterThan(0.99);
+    expect(Math.max(...v)).toBeLessThan(1.26);
+    send(p, fx('roll', false, { len: 0.5 }));
+    const after = run(p, 1.7, 0.1, time);
+    expect(after[after.length - 1]).toBeCloseTo(1.8, 2);
+  });
+
+  it('BRAKE slows the sound down to a stop over the given beats', () => {
+    const p = new registry.beatfx();
+    const sine = (t: number) => Math.sin(2 * Math.PI * 440 * t);
+    run(p, 0, 0.5, sine);
+    send(p, fx('brake', true, { len: 2 }));                        // 2 beats = 1 s
+    const out = run(p, 0.5, 1.2, sine);
+    const f1 = zc(out, 0.05 * SR, 0.25 * SR), f2 = zc(out, 0.5 * SR, 0.7 * SR);
+    expect(f1).toBeGreaterThan(300);
+    expect(f2).toBeLessThan(f1 * 0.7);
+    expect(Math.max(...Array.from(out.slice(Math.round(1.05 * SR))).map(Math.abs))).toBeLessThan(0.02);
+  });
+
+  it('PITCH +12 doubles the frequency, 0 leaves it alone', () => {
+    const p = new registry.beatfx();
+    const sine = (t: number) => Math.sin(2 * Math.PI * 220 * t);
+    run(p, 0, 0.2, sine);
+    send(p, fx('pitch', true, { amount: 12 }));
+    const up = run(p, 0.2, 0.6, sine);
+    expect(zc(up, 0.1 * SR, 0.6 * SR)).toBeGreaterThan(400);
+    expect(zc(up, 0.1 * SR, 0.6 * SR)).toBeLessThan(480);
+    send(p, fx('pitch', true, { amount: 0 }));
+    const same = run(p, 0.8, 0.4, sine);
+    expect(zc(same, 0.1 * SR, 0.4 * SR)).toBeCloseTo(220, -1);
   });
 });

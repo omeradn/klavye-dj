@@ -34,6 +34,20 @@ export interface DeckState {
 
 export type LimiterIn = { t: 'ceiling'; db: number };
 
+/** Beat FX worklet settings (sent whole on every change). */
+export interface BeatFxIn {
+  mode: 'roll' | 'gate' | 'brake' | 'pitch';
+  on: boolean;
+  /** beat length in seconds (real time, tempo included) */
+  beat: number;
+  /** AudioContext time of a beat line */
+  anchor: number;
+  /** effect length in beats */
+  len: number;
+  /** gate: depth 0..1 · pitch: semitones · roll/brake: unused */
+  amount: number;
+}
+
 export interface LimiterStats {
   t: 'stats';
   /** smallest gain applied in this period (1 = no limiting) */

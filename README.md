@@ -2,7 +2,7 @@
 
 Tarayıcıda çalışan, klavye ve mouse ile kontrol edilen DJ uygulaması. Hedef: profesyonel bir DJ yazılımı + DJ'liği adım adım öğreten bir akademi + restoran setleri için özel modlar.
 
-> Durum: **Faz 3a tamam** (8 pad, 7 pad modu, sampler) · **Faz 2 tamam** — ses motoru, kulaklık cue, kütüphane (playlist, geçmiş, etiket), beatgrid, gerçek SYNC, quantize, Türk ritimleri, ton tespiti ve Ton Çarkı, 3 renkli dalga formu. Yol haritası için [CHANGELOG.md](CHANGELOG.md).
+> Durum: **Faz 3b tamam** (Ritim FX, Kanal FX) · **Faz 3a** (8 pad, sampler) · **Faz 2 tamam** — ses motoru, kulaklık cue, kütüphane (playlist, geçmiş, etiket), beatgrid, gerçek SYNC, quantize, Türk ritimleri, ton tespiti ve Ton Çarkı, 3 renkli dalga formu. Yol haritası için [CHANGELOG.md](CHANGELOG.md).
 
 ## Gerekenler
 - Windows'ta **Node.js 20 veya üstü** (kontrol: `node -v`)
@@ -79,6 +79,7 @@ legacy/      ilk tek dosyalık sürüm (referans için)
 | TON +1 yarım ses (⇧ = −1) | " | Ü |
 | Kulaklık CUE (ECHO tuşu + ⇧) | ⇧V | ⇧Ç |
 
+Ritim FX: `B` aç/kapa · `⇧B` hedef · `,` efekt · `*` / `-` vuruş · `İ` seviye · Kanal FX türü: `↑`.
 Genel: `←` `→` `↓` crossfader · `PgUp` / `PgDn` master · `F2` ses ayarları · `Esc` / `F1` yardım.
 Mouse: deck üzerinde tekerlek = tempo, bir kontrolün üzerinde tekerlek = o kontrol, çift tık = sıfırla.
 Jog: VINYL açıkken iç kısmı tutup çevirmek = scratch; dış halka = tempo dürtme (çalarken) / ileri-geri sarma (dururken).
