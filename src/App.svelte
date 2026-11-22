@@ -45,6 +45,26 @@
   <section class="deck B" id="deckB"></section>
 </div>
 
+<section class="lib">
+  <div class="lbar">
+    <b>KÜTÜPHANE</b>
+    <input id="libSearch" type="search" placeholder="Ara: şarkı, klasör ya da BPM (ör. 124)" autocomplete="off">
+    <span id="libStat" class="note"></span>
+    <div class="sp"></div>
+    <button class="hbtn" id="libDir" title="Bir müzik klasörü ekle (alt klasörler dahil). Tarayıcı klasörü hatırlar.">+ Klasör</button>
+    <button class="hbtn" id="libFiles" title="Tek tek şarkı dosyası ekle">+ Dosya</button>
+    <input type="file" id="libDirInput" webkitdirectory multiple hidden>
+    <input type="file" id="libFileInput" accept="audio/*" multiple hidden>
+  </div>
+  <div id="libRoots" class="roots"></div>
+  <div class="ltable"><table id="libT">
+    <thead><tr><th data-k="name">Şarkı</th><th data-k="folder">Klasör</th><th data-k="bpm" class="num">BPM</th><th data-k="dur" class="num">Süre</th><th class="ld">Yükle</th></tr></thead>
+    <tbody id="libBody"></tbody>
+  </table></div>
+  <div id="libMore" class="note"></div>
+  <p class="note">Çift tık: boştaki deck'e yükle · A / B: o deck'e yükle · Başlığa tıkla: sırala · Esc: aramayı temizle</p>
+</section>
+
 <div id="help"><div class="box">
   <h2 style="margin:0 0 10px">Klavye kısayolları</h2>
   <table id="helpT"></table>

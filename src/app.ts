@@ -9,6 +9,7 @@ import { buildHelpTable, toggleHelp } from './ui/help';
 import { audioSettings } from './engine/settings';
 import { buildOutput, outputNodes, phones, setCueMix, setPhonesLevel, setSplit } from './engine/output';
 import { settingsOpen, setupSettings, toggleSettings } from './ui/settings';
+import { rememberAnalysis, setupLibrary } from './library/library';
 
 let started = false;
 
@@ -81,6 +82,8 @@ export function initApp(): void {
 
   setupBadges(decks);
   setupSettings();
+  decks.forEach(d => { d.onAnalyzed = rememberAnalysis; });
+  void setupLibrary(decks);
   buildHelpTable();
   $('#keysBtn').onclick = () => document.body.classList.toggle('nokeys');
   $('#helpBtn').onclick = () => toggleHelp();

@@ -8,7 +8,7 @@ import { DEMOS, renderDemo } from '../demo/synth';
 import type { DeckIn, DeckState } from './worklets/protocol';
 import SignalsmithStretch, { type StretchNode } from 'signalsmith-stretch';
 
-const AUDIO_EXT = /\.(mp3|wav|m4a|aac|ogg|flac|aiff?)$/i;
+import { AUDIO_EXT } from '../library/model';
 /** One platter revolution = 1.8 s of audio (33 1/3 rpm vinyl). */
 const SEC_PER_REV = 1.8;
 /** Jog ring (outer part) = nudge; inner part = scratch (when VINYL is on). */
@@ -61,6 +61,8 @@ export class Deck {
   demoIdx: number;
   vu = 0;
   wired = false;
+  /** called after a file was analysed here (the library caches the result) */
+  onAnalyzed?: (f: File, bpm: number | null, dur: number) => void;
 
   // controls
   tempoF!: Fader; chF!: Fader;
@@ -369,7 +371,8 @@ export class Deck {
   }
 
   /* ---------- loading ---------- */
-  async load(f: File): Promise<void> {
+  /** Load a song file. `knownBpm` (from the library cache) skips BPM detection. */
+  async load(f: File, knownBpm?: number | null): Promise<void> {
     const ctx = ensureCtx();
     if (this.playing && !confirm(`Deck ${this.id} şu an çalıyor. Yine de yeni şarkı yüklensin mi?`)) return;
     this.ui.title.textContent = f.name.replace(/\.[^.]+$/, '');
@@ -378,18 +381,20 @@ export class Deck {
       const buf = await ctx.decodeAudioData(await f.arrayBuffer());
       const L = buf.getChannelData(0), R = buf.numberOfChannels > 1 ? buf.getChannelData(1) : L;
       this.peaks = computePeaks(L, buf.sampleRate);
-      const bpm = detectBPM(L, buf.sampleRate);
+      const bpm = knownBpm !== undefined ? knownBpm : detectBPM(L, buf.sampleRate);
+      if (knownBpm === undefined) this.onAnalyzed?.(f, bpm, buf.duration);
       await this.setTrack(f.name.replace(/\.[^.]+$/, ''), new Float32Array(L), new Float32Array(R), buf.sampleRate, bpm);
     } catch {
       toast('Bu dosya açılamadı (desteklenmeyen biçim olabilir)');
     }
   }
 
-  async loadDemo(): Promise<void> {
+  /** Load a built-in demo track (next one in turn, or a given index). */
+  async loadDemo(index?: number): Promise<void> {
     const ctx = ensureCtx();
     if (this.playing && !confirm(`Deck ${this.id} şu an çalıyor. Yine de demo yüklensin mi?`)) return;
-    const spec = DEMOS[this.demoIdx % DEMOS.length];
-    this.demoIdx += 2;
+    const spec = DEMOS[(index ?? this.demoIdx) % DEMOS.length];
+    if (index == null) this.demoIdx += 2;
     toast(`Deck ${this.id}: demo hazırlanıyor…`);
     await new Promise(r => setTimeout(r, 30)); // let the toast paint
     const { L, R } = renderDemo(spec, ctx.sampleRate);

@@ -82,6 +82,11 @@ Genel: `←` `→` `↓` crossfader · `PgUp` / `PgDn` master · `F2` ses ayarla
 Mouse: deck üzerinde tekerlek = tempo, bir kontrolün üzerinde tekerlek = o kontrol, çift tık = sıfırla.
 Jog: VINYL açıkken iç kısmı tutup çevirmek = scratch; dış halka = tempo dürtme (çalarken) / ileri-geri sarma (dururken).
 
+## Kütüphane
+- **+ Klasör** ile müzik klasörünü ekle; Chrome/Edge klasörü hatırlar. Şarkılar arka planda analiz edilir (BPM, süre).
+- Satırdaki **A** / **B** ile o deck'e yükle, çift tıkla boştaki deck'e yükle. Üstteki kutuda ara (BPM de yazabilirsin, ör. `124`).
+- Dosyaların kopyası alınmaz; kütüphane sadece nerede olduklarını hatırlar. Klasörü taşırsan yeniden ekle.
+
 ## Kulaklık
 - Her kanaldaki **🎧 CUE** o kanalı kulaklığa gönderir (fader'dan önce, yani kanal kapalıyken de duyulur).
 - **Tek çıkışlı bilgisayar** (laptop + kulaklık): mikserde **SPLIT**'i aç → sol kulak CUE, sağ kulak master.

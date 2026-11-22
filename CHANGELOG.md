@@ -11,6 +11,18 @@
 7. Reels çıktısı, hayalet mod, set planlayıcı
 8. Cila ve yayın
 
+## 0.5.0 — Faz 2a · Kütüphane (2026-11-22)
+### Eklendi
+- Deck'lerin altında **KÜTÜPHANE**:
+  - **+ Klasör**: müzik klasörünü (alt klasörler dahil) ekler; tarayıcı klasörü hatırlar, sayfa kapanıp açılınca liste yerinde. İzin süresi dolarsa klasörün yanında "erişim ver" çıkar.
+  - **+ Dosya**: tek tek şarkı ekler.
+  - Arka planda her şarkının BPM'i ve süresi analiz edilir ve saklanır (aynı şarkı bir daha analiz edilmez).
+  - Arama (Türkçe harf duyarsız: "sarki" = "Şarkı"; sayı yazınca ±2 BPM'deki şarkılar), başlığa tıklayarak sıralama (şarkı, klasör, BPM, süre).
+  - Her satırda **A** / **B** butonu; çift tık = boştaki deck'e yükle. Yüklenen şarkılar ✓ ile işaretlenir.
+  - 4 demo parça da listede.
+- Arama kutusuna yazarken DJ kısayolları çalışmaz (yanlışlıkla şarkı durmasın).
+- Testler: arama, sıralama, dosya tanıma (toplam 32 test).
+
 ## 0.4.0 — Faz 1c · Kulaklık cue ve çıkış ayarları (2026-11-22)
 ### Eklendi
 - **Kulaklık CUE**: her kanalda `🎧 CUE` butonu (klavye ⇧V / ⇧Ç). Kanal fader'ı ve crossfader kapalıyken de o şarkıyı kulaklıkta dinlersin (EQ ve filtre dahil, fader öncesi).

@@ -151,3 +151,36 @@ kbd{background:#000;border:1px solid #444b57;border-bottom-width:2px;border-radi
 #settings select{background:#0f1114;color:var(--txt);border:1px solid var(--line);border-radius:6px;padding:5px 8px;max-width:100%}
 #settings .meas{font:12px ui-monospace,monospace;color:var(--green)}
 #settings .warn{color:var(--amber);font-size:12px}
+
+/* library */
+.lib{margin:0 14px 14px;background:linear-gradient(180deg,var(--body2),var(--body));border:1px solid var(--line);border-radius:16px;padding:10px 12px}
+.lbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.lbar b{letter-spacing:2px;font-size:12px}
+.lbar .sp{flex:1}
+#libSearch{background:#0f1114;color:var(--txt);border:1px solid var(--line);border-radius:7px;padding:6px 10px;width:300px;max-width:100%}
+#libSearch:focus{outline:none;border-color:var(--amber)}
+.roots{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 4px}
+.chip{display:inline-flex;align-items:center;gap:5px;background:#1c2026;border:1px solid var(--line);border-radius:14px;padding:2px 4px 2px 10px;font-size:12px}
+.chip small{color:var(--mut)}
+.chip.need{border-color:var(--amber)}
+.chip button{background:none;border:0;color:var(--mut);cursor:pointer;padding:2px 6px;border-radius:10px}
+.chip button:hover{color:var(--txt);background:#2c3038}
+.chip.need button[data-grant]{color:var(--amber)}
+.ltable{max-height:320px;overflow:auto;border:1px solid var(--line);border-radius:10px;margin-top:4px}
+#libT{width:100%;border-collapse:collapse;font-size:13px}
+#libT th{position:sticky;top:0;background:#14171b;color:var(--mut);font-weight:500;text-align:left;padding:6px 8px;cursor:pointer;user-select:none;white-space:nowrap}
+#libT th.on{color:var(--txt)}
+#libT th[data-dir]:not([data-dir=""])::after{content:' ' attr(data-dir);font-size:9px}
+#libT td{padding:4px 8px;border-top:1px solid #23272e}
+#libT tr:hover td{background:#1b1f25}
+#libT .num{text-align:right;font-family:ui-monospace,monospace;width:60px}
+#libT .fd{color:var(--mut);max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#libT .nm{max-width:420px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#libT tr.played .nm{color:var(--mut)}
+#libT tr.played .nm::after{content:' ✓';color:var(--green)}
+#libT tr.demo .fd{color:var(--violet)}
+#libT .ld{width:80px;text-align:right;cursor:default}
+#libT .ld button{background:#1c2026;border:1px solid var(--line);border-radius:6px;width:28px;height:22px;margin-left:4px;cursor:pointer;font-weight:700}
+#libT .ld .la{color:var(--a)} #libT .ld .lb{color:var(--b)}
+#libT .ld .la:hover{border-color:var(--a)} #libT .ld .lb:hover{border-color:var(--b)}
+#libT .empty{color:var(--mut);text-align:center;padding:18px}

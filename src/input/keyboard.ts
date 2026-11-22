@@ -58,6 +58,12 @@ export function buildKeymap(): Record<string, KEntry> {
   return K;
 }
 
+function isTyping(t: EventTarget | null): boolean {
+  const el = t as HTMLElement | null;
+  return !!el && (el.tagName === 'TEXTAREA' || el.tagName === 'SELECT' || el.isContentEditable ||
+    (el.tagName === 'INPUT' && !['radio', 'checkbox', 'range', 'button'].includes((el as HTMLInputElement).type)));
+}
+
 export function setupKeyboard(decks: Deck[], global: Record<string, (e: KeyboardEvent) => void>): void {
   const KMAP = buildKeymap();
 
@@ -70,6 +76,7 @@ export function setupKeyboard(decks: Deck[], global: Record<string, (e: Keyboard
 
   document.addEventListener('keydown', e => {
     if (e.ctrlKey || e.metaKey || e.altKey) return;
+    if (isTyping(e.target)) return;   // typing in the library search box
     if ((e.code === 'Space' || e.code === 'Enter') && (e.target as Element)?.closest?.('button')) { e.preventDefault(); return; }
     if (global[e.code]) { e.preventDefault(); ensureCtx(); global[e.code](e); return; }
     // Shift + a key without a shift function falls back to its normal function
@@ -82,6 +89,7 @@ export function setupKeyboard(decks: Deck[], global: Record<string, (e: Keyboard
   });
 
   document.addEventListener('keyup', e => {
+    if (isTyping(e.target)) return;
     const m = KMAP[e.code];
     if (m && m.mode === 'h') decks[m.d].hold(m.a, false);
     if (e.key === 'Shift') decks.forEach(d => { if (d.bend) d.setBend(0); });
