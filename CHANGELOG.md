@@ -1,15 +1,18 @@
 # Değişiklik günlüğü
 
-## Yol haritası (onaylanan sıra)
-0. Kurulum ve taşıma ✅
-1. Ses motoru ✅ — 1a (worklet, limiter, demo) · 1b key lock · 1c kulaklık cue
-2. Analiz ve kütüphane ✅ — 2a kütüphane · 2b beatgrid + SYNC · 2c ton, renkli dalga formu, listeler
-3. Akademi (dersler, beatmatch antrenörü, geçiş sınavı)
-4. Restoran Modu, set kaydı, canlı koç, geçiş asistanı
-5. Gelişmiş FX ve pad modları — öne alındı: 3a pad modları + sampler ✅ · 3b Ritim FX + Kanal FX · 3c mikser ekstraları
-6. MIDI ve tuş değiştirme
-7. Reels çıktısı, hayalet mod, set planlayıcı
-8. Cila ve yayın
+## Yol haritası (onaylanan sıra, güncelleme 2026-11-22)
+Fazların asıl numaraları brief'tekiyle aynı; burada çalışma sırasıyla listeleniyor.
+1. **Faz 0** Kurulum ve taşıma ✅
+2. **Faz 1** Ses motoru ✅ — 1a worklet, limiter, demo · 1b key lock · 1c kulaklık cue
+3. **Faz 2** Analiz ve kütüphane ✅ — 2a kütüphane · 2b beatgrid + SYNC · 2c ton, renkli dalga formu, listeler
+4. **Faz 3** Mikser, efektler, pad'ler (öne alındı) — 3a pad modları + sampler ✅ · 3b Ritim FX + Kanal FX · 3c mikser ekstraları
+5. **Yayın**: GitHub'a yükleme + canlı site (GitHub Pages), her güncellemede testler ve otomatik yayın (3b'den sonra)
+6. **Faz 4** DJ Akademi — set senaryosu oynatıcı ve **hayalet eller** (kullanılan kontrol parlar, Türkçe açıklama: "önce izle, sonra sen yap") dahil
+7. **Faz 6a** Restoran Modu, set kaydı, canlı koç, geçiş asistanı
+8. **Faz 5** MIDI ve tuş değiştirme
+9. **Faz 6b** Reels çıktısı, hayalet mod, set planlayıcı
+10. **Ajan DJ** (yeni faz): Claude şarkıları analiz edip vuruşa oturan bir set senaryosu yazar, uygulama canlı çalar, her hamle ekranda görünür; geçişler arasında Claude planı günceller. Canlı yayınlar için (cd.md parçaları)
+11. **Faz 7** Cila ve yayın
 
 ## 0.8.0 — Faz 3a · Performans pad'leri ve sampler (2026-11-22)
 ### Eklendi
