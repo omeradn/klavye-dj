@@ -2,7 +2,7 @@
 
 Tarayıcıda çalışan, klavye ve mouse ile kontrol edilen DJ uygulaması. Hedef: profesyonel bir DJ yazılımı + DJ'liği adım adım öğreten bir akademi + restoran setleri için özel modlar.
 
-> Durum: **Faz 1b tamam** — yeni ses motoru, master limiter, demo parçalar, key lock ve ton kaydırma. Yol haritası için [CHANGELOG.md](CHANGELOG.md).
+> Durum: **Faz 1 tamam** — yeni ses motoru, master limiter, demo parçalar, key lock, ton kaydırma, kulaklık cue ve çıkış ayarları. Yol haritası için [CHANGELOG.md](CHANGELOG.md).
 
 ## Gerekenler
 - Windows'ta **Node.js 20 veya üstü** (kontrol: `node -v`)
@@ -76,10 +76,17 @@ legacy/      ilk tek dosyalık sürüm (referans için)
 | CENSOR — basılı tut (⇧ = SPIN) | < | . |
 | Beat jump ileri (⇧ = geri) | 5 | 6 |
 | TON +1 yarım ses (⇧ = −1) | " | Ü |
+| Kulaklık CUE (ECHO tuşu + ⇧) | ⇧V | ⇧Ç |
 
-Genel: `←` `→` `↓` crossfader · `PgUp` / `PgDn` master · `Esc` / `F1` yardım.
+Genel: `←` `→` `↓` crossfader · `PgUp` / `PgDn` master · `F2` ses ayarları · `Esc` / `F1` yardım.
 Mouse: deck üzerinde tekerlek = tempo, bir kontrolün üzerinde tekerlek = o kontrol, çift tık = sıfırla.
 Jog: VINYL açıkken iç kısmı tutup çevirmek = scratch; dış halka = tempo dürtme (çalarken) / ileri-geri sarma (dururken).
+
+## Kulaklık
+- Her kanaldaki **🎧 CUE** o kanalı kulaklığa gönderir (fader'dan önce, yani kanal kapalıyken de duyulur).
+- **Tek çıkışlı bilgisayar** (laptop + kulaklık): mikserde **SPLIT**'i aç → sol kulak CUE, sağ kulak master.
+- **4 kanallı ses kartı / DJ kontrolcüsü**: `F2` → Kulaklık → *4 kanallı ses kartı*. Çıkış 1-2 hoparlöre, 3-4 kulaklığa.
+- **İki ayrı cihaz** (ör. hoparlör + USB kulaklık): `F2` → Kulaklık → *Ayrı cihaz* ve cihazı seç.
 
 ## Teknik notlar
 - Arayüz Svelte 5 ile (listeler, akademi ve ayar ekranları az kodla ve küçük paketle yazılabilsin diye); ses motoru ve dalga formu çizimi Svelte'ten bağımsız, düz TypeScript.

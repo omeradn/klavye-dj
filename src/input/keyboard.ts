@@ -25,6 +25,7 @@ export const BIND: Bind[] = [
   ['filterReset', 'KeyG', 'Semicolon', 1, 'Filtre ortala'],
   ['killLow', 'KeyZ', 'KeyN', 0, 'LOW kill'], ['killMid', 'KeyX', 'KeyM', 0, 'MID kill'], ['killHigh', 'KeyC', 'Comma', 0, 'HI kill'],
   ['eqReset', 'KeyZ', 'KeyN', 1, 'EQ sıfırla'], ['fx', 'KeyV', 'Period', 0, 'ECHO aç / kapat'],
+  ['pfl', 'KeyV', 'Period', 1, 'Kulaklık CUE (bu kanalı kulaklıkta dinle)'],
   ['fxDown', 'KeyX', 'KeyM', 1, 'ECHO seviye −', 'r'], ['fxUp', 'KeyC', 'Comma', 1, 'ECHO seviye +', 'r'],
   ['hot0', 'Digit1', 'Digit7', 0, 'Hot cue 1 (boşsa kaydet)'], ['hot1', 'Digit2', 'Digit8', 0, 'Hot cue 2'],
   ['hot2', 'Digit3', 'Digit9', 0, 'Hot cue 3'], ['hot3', 'Digit4', 'Digit0', 0, 'Hot cue 4'],

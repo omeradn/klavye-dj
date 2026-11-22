@@ -2,7 +2,7 @@
 
 ## Yol haritası (onaylanan sıra)
 0. Kurulum ve taşıma ✅
-1. Ses motoru — 1a ✅ (worklet, limiter, demo) · 1b ✅ key lock · 1c kulaklık cue
+1. Ses motoru ✅ — 1a (worklet, limiter, demo) · 1b key lock · 1c kulaklık cue
 2. Analiz ve kütüphane (beatgrid, gerçek SYNC, ton, Türk ritimleri, IndexedDB)
 3. Akademi (dersler, beatmatch antrenörü, geçiş sınavı)
 4. Restoran Modu, set kaydı, canlı koç, geçiş asistanı
@@ -10,6 +10,28 @@
 6. MIDI ve tuş değiştirme
 7. Reels çıktısı, hayalet mod, set planlayıcı
 8. Cila ve yayın
+
+## 0.4.0 — Faz 1c · Kulaklık cue ve çıkış ayarları (2026-11-22)
+### Eklendi
+- **Kulaklık CUE**: her kanalda `🎧 CUE` butonu (klavye ⇧V / ⇧Ç). Kanal fader'ı ve crossfader kapalıyken de o şarkıyı kulaklıkta dinlersin (EQ ve filtre dahil, fader öncesi).
+- Mikserin altında **🎧 KULAKLIK** bölümü: `CUE ⟷ MST` (kulaklıkta cue ile master karışımı), `SEVİYE`, `SPLIT`.
+- **SPLIT**: sol kulak CUE, sağ kulak master (ikisi de mono). Tek çıkışlı bilgisayarda bir kulaklıkla mix çalışmak için.
+- **Ses ayarları** penceresi (`Ses ayarları` butonu / F2):
+  - Ana çıkış cihazı seçimi.
+  - Kulaklık modu: **Tek çıkış**, **4 kanallı ses kartı** (1-2 master, 3-4 kulaklık), **Ayrı cihaz** (kulaklık ikinci bir ses cihazında).
+  - Gecikme: Düşük / Orta / Güvenli, ölçülen gecikme gösterilir (değişiklik sayfa yenilenince geçerli olur).
+  - Cihaz adları gizliyse "Cihaz adlarını göster" (tarayıcı izin isteyince gösterir; mikrofon kullanılmaz).
+- Kulaklık sinyalinin de kendi limiter'ı var: iki şarkı birden cue'dayken de clip olmaz.
+- Ayarlar tarayıcıda saklanır (sayfa yenilenince kaybolmaz). SPLIT bilerek saklanmaz.
+- Testler: ayar okuma/bozuk veri, cue/master karışımının eşit güçte olduğu (toplam 27 test).
+
+### Ölçüldü (tarayıcıda)
+- SPLIT açık, A cue'da, crossfader B'de: sol kulak 0,44, sağ kulak 0,00 (master sessiz). Crossfader A'ya gelince sağ kulak 0,27.
+- 4 kanal seçilip kart 2 kanallıysa uyarı verip tek çıkışa dönüyor. Ayrı cihaz modunda kulaklık sesi ikinci çıkışa akıyor.
+- Ölçülen çıkış gecikmesi (Düşük ayar, bu bilgisayar): ~50 ms.
+
+### Doğrulanamadı
+- Gerçek 4 kanallı ses kartı ve ikinci kulaklık cihazı burada yok; bu iki modu sen kendi donanımınla denemelisin.
 
 ## 0.3.0 — Faz 1b · Key lock ve ton kaydırma (2026-11-21)
 ### Eklendi

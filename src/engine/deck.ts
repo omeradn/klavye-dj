@@ -1,6 +1,7 @@
 import { $, clamp, fmt, toast, setText } from '../util';
 import { Knob, Fader } from '../ui/controls';
 import { engine, ensureCtx, ramp } from './context';
+import { phonesAudible } from './output';
 import { detectBPM } from '../analysis/bpm';
 import { computePeaks, PPS } from '../analysis/peaks';
 import { DEMOS, renderDemo } from '../demo/synth';
@@ -46,6 +47,8 @@ export class Deck {
   loopOn = false; loopBeats = 4; loopS = 0; loopE = 0;
   kills = { lo: false, mid: false, hi: false };
   fxOn = false; keyLock = true;
+  /** headphone CUE (pre-fader listen) */
+  pfl = false;
   /** manual key shift in semitones (−12…+12) */
   keyShift = 0;
   wet = 0;
@@ -62,7 +65,7 @@ export class Deck {
   // controls
   tempoF!: Fader; chF!: Fader;
   trimK!: Knob; hiK!: Knob; midK!: Knob; loK!: Knob; filK!: Knob; fxK!: Knob;
-  fxBtn!: HTMLButtonElement;
+  fxBtn!: HTMLButtonElement; pflBtn!: HTMLButtonElement;
   file!: HTMLInputElement;
   readonly ws: HTMLCanvasElement;
   readonly wo: HTMLCanvasElement;
@@ -76,7 +79,7 @@ export class Deck {
   private wiring?: Promise<void>;
   trim?: GainNode;
   lo?: BiquadFilterNode; mid?: BiquadFilterNode; hi?: BiquadFilterNode; fil?: BiquadFilterNode;
-  chGain?: GainNode; xfG?: GainNode; fxSend?: GainNode; fb?: GainNode;
+  chGain?: GainNode; cueG?: GainNode; xfG?: GainNode; fxSend?: GainNode; fb?: GainNode;
   delay?: DelayNode;
   an?: AnalyserNode;
   anBuf = new Float32Array(1024);
@@ -274,6 +277,12 @@ export class Deck {
     this.fxK.el.style.width = this.fxK.el.style.height = '34px';
     this.fxK.ind.style.transformOrigin = '50% 13px'; this.fxK.ind.style.height = '9px';
 
+    this.pflBtn = document.createElement('button'); this.pflBtn.className = 'b pfl'; this.pflBtn.dataset.a = 'pfl';
+    this.pflBtn.textContent = '🎧 CUE';
+    this.pflBtn.title = 'Bu kanalı kulaklıkta dinle (fader ve crossfader kapalıyken de duyulur)';
+    this.pflBtn.onclick = () => { ensureCtx(); this.act('pfl'); };
+    c.appendChild(this.pflBtn);
+
     const fd = document.createElement('div'); fd.dataset.a = 'fader'; c.appendChild(fd);
     const lb = document.createElement('div'); lb.className = 'lbl2'; lb.textContent = 'KANAL'; c.appendChild(lb);
     this.chF = new Fader(fd, { min: 0, max: 1, def: 0.85, onchange: v => { if (this.chGain) ramp(this.chGain.gain, v * v); } });
@@ -290,7 +299,8 @@ export class Deck {
 
   /**
    * deck worklet ─ out0 (original + wet weight) ──────────────► keylock-mix ─► trim ─► EQ ─► filter ─► channel fader ─► crossfader ─► bus
-   *              └ out1 (look-ahead) ─► pitch shifter ─────────┘                                        crossfader ─► echo ─► bus
+   *              └ out1 (look-ahead) ─► pitch shifter ─────────┘                              │         crossfader ─► echo ─► bus
+   *                                                                                            └► headphone CUE ─► cueBus
    * (echo is post-crossfader so its tail keeps ringing after an "echo out" with the crossfader)
    */
   private async buildGraph(): Promise<void> {
@@ -323,12 +333,14 @@ export class Deck {
     this.hi = C.createBiquadFilter(); this.hi.type = 'highshelf'; this.hi.frequency.value = 3800;
     this.fil = C.createBiquadFilter();
     this.chGain = C.createGain(); this.chGain.gain.value = this.chF.v ** 2;
+    this.cueG = C.createGain(); this.cueG.gain.value = this.pfl ? 1 : 0;
     this.xfG = C.createGain();
     this.fxSend = C.createGain(); this.fxSend.gain.value = 0;
     this.delay = C.createDelay(4); this.fb = C.createGain(); this.fb.gain.value = 0.45;
     this.an = C.createAnalyser(); this.an.fftSize = 1024;
     this.klMix.connect(this.trim).connect(this.lo).connect(this.mid).connect(this.hi).connect(this.fil).connect(this.chGain);
     this.chGain.connect(this.xfG); this.chGain.connect(this.an);
+    if (engine.cueBus) this.fil.connect(this.cueG).connect(engine.cueBus);
     this.xfG.connect(engine.bus);
     this.xfG.connect(this.fxSend).connect(this.delay);
     this.delay.connect(this.fb).connect(this.delay);
@@ -457,6 +469,11 @@ export class Deck {
       case 'killHigh': this.kills.hi = !this.kills.hi; this.applyEQ(); break;
       case 'eqReset': this.hiK.set(0); this.midK.set(0); this.loK.set(0); this.kills = { lo: false, mid: false, hi: false }; this.applyEQ(); break;
       case 'fx': this.fxOn = !this.fxOn; this.applyFX(); break;
+      case 'pfl':
+        this.pfl = !this.pfl;
+        if (this.cueG) ramp(this.cueG.gain, this.pfl ? 1 : 0, 0.01);
+        if (this.pfl && !phonesAudible()) toast("Tek çıkışta kulaklık CUE'sunu duymak için mikserdeki SPLIT'i aç (sol kulak: CUE, sağ kulak: master)");
+        break;
       case 'fxDown': this.fxK.nudge(-1); break;
       case 'fxUp': this.fxK.nudge(1); break;
       case 'vinyl': this.vinyl = !this.vinyl; toast(this.vinyl ? 'VINYL açık: jog ile scratch' : 'VINYL kapalı: jog sadece tempo dürtme'); break;
@@ -620,6 +637,7 @@ export class Deck {
     this.q('slip').classList.toggle('on', this.slip);
     this.q('reverse').classList.toggle('on', this.reverse);
     this.q('censor').classList.toggle('on', this.censor);
+    this.pflBtn.classList.toggle('on', this.pfl);
     this.hot.forEach((h, i) => this.q('hot' + (i + 1)).classList.toggle('set', h != null));
     [1, 2, 4, 8].forEach(n => this.q('bl' + n).classList.toggle('on', this.loopOn && this.loopBeats === n));
 

@@ -13,6 +13,7 @@
     <i id="limLed"></i><span>LİMİT</span><div class="grm"><i id="grBar"></i></div><span id="grTxt">0.0 dB</span>
   </div>
   <div class="mwrap">MASTER <div class="kwrap" id="masterK"></div></div>
+  <button class="hbtn" id="setBtn">Ses ayarları <kbd>F2</kbd></button>
   <button class="hbtn" id="keysBtn">Tuş etiketleri</button>
   <button class="hbtn" id="helpBtn">Kısayollar <kbd>Esc</kbd></button>
 </header>
@@ -34,6 +35,12 @@
       <div class="lbl"><span style="color:var(--a)">A</span><span>CROSSFADER</span><span style="color:var(--b)">B</span></div>
       <div class="fader h" id="xf"></div>
     </div>
+    <div class="phones" title="Kulaklık: kanallardaki 🎧 CUE ile seçtiğin şarkıyı dinlersin">
+      <span class="plbl">🎧 KULAKLIK</span>
+      <div id="cueMixK"></div>
+      <div id="phLevelK"></div>
+      <button class="b" id="splitBtn" title="Sol kulak: CUE · sağ kulak: master (tek çıkışlı bilgisayarda kulaklıkla çalışmak için)">SPLIT</button>
+    </div>
   </section>
   <section class="deck B" id="deckB"></section>
 </div>
@@ -45,5 +52,10 @@
   Tekerlek: deck üzerinde tempo (±0,1%), herhangi bir düğme/fader üzerinde o kontrol. Çift tık = varsayılana döndür.
   Jog wheel: çalarken çevir = beat yakalama, dururken çevir = şarkıda ileri/geri.</p>
   <button class="hbtn" id="helpClose">Kapat</button>
+</div></div>
+<div id="settings"><div class="box">
+  <h2 style="margin:0 0 12px">Ses ayarları</h2>
+  <div id="setBody"></div>
+  <button class="hbtn" id="setClose">Kapat</button>
 </div></div>
 <div class="toast" id="toast"></div>

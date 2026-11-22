@@ -1,11 +1,14 @@
 import { $, setText } from './util';
 import { Knob, Fader } from './ui/controls';
 import { Deck } from './engine/deck';
-import { engine, onCtxCreated, ramp } from './engine/context';
+import { engine, ensureCtx, onCtxCreated, ramp } from './engine/context';
 import { Mixer } from './engine/mixer';
 import { setupKeyboard } from './input/keyboard';
 import { setupBadges } from './ui/badges';
 import { buildHelpTable, toggleHelp } from './ui/help';
+import { audioSettings } from './engine/settings';
+import { buildOutput, outputNodes, phones, setCueMix, setPhonesLevel, setSplit } from './engine/output';
+import { settingsOpen, setupSettings, toggleSettings } from './ui/settings';
 
 let started = false;
 
@@ -28,6 +31,16 @@ export function initApp(): void {
   const xf = new Fader($('#xf'), { vertical: false, min: -1, max: 1, def: 0, onchange: v => mixer.setXF(v) });
   $('#xf').classList.add('tick');
 
+  // headphones: cue/master blend, level, split
+  const cueMixK = new Knob($('#cueMixK'), { min: 0, max: 1, def: 0.5, label: 'CUE ⟷ MST', onchange: setCueMix });
+  cueMixK.set(audioSettings.cueMix);
+  const phLevelK = new Knob($('#phLevelK'), { min: 0, max: 1, def: 0.8, label: 'SEVİYE', onchange: setPhonesLevel });
+  phLevelK.set(audioSettings.phonesLevel);
+  const splitBtn = $('#splitBtn');
+  splitBtn.onclick = () => { ensureCtx(); setSplit(!phones.split); splitBtn.classList.toggle('on', phones.split); };
+
+  // output first: decks connect to the cue bus it listens to
+  onCtxCreated(ctx => buildOutput(ctx));
   onCtxCreated(async () => {
     engine.master!.gain.value = masterK.v;
     await Promise.all(decks.map(d => d.wire()));
@@ -58,14 +71,16 @@ export function initApp(): void {
     ArrowDown: () => xf.set(0),
     PageUp: () => masterK.nudge(1),
     PageDown: () => masterK.nudge(-1),
-    Escape: () => toggleHelp(),
+    Escape: () => { if (settingsOpen()) toggleSettings(false); else toggleHelp(); },
     F1: () => toggleHelp(),
+    F2: () => toggleSettings(),
   });
 
   // dev-only handle for debugging in the browser console (not in production builds)
-  if (import.meta.env.DEV) (window as unknown as Record<string, unknown>).kdj = { decks, engine, mixer };
+  if (import.meta.env.DEV) (window as unknown as Record<string, unknown>).kdj = { decks, engine, mixer, out: outputNodes };
 
   setupBadges(decks);
+  setupSettings();
   buildHelpTable();
   $('#keysBtn').onclick = () => document.body.classList.toggle('nokeys');
   $('#helpBtn').onclick = () => toggleHelp();

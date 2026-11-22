@@ -14,6 +14,8 @@ export function buildHelpTable(): void {
   h += `<tr><td>Crossfader sol / sağ / orta (⇧ = tam uç)</td><td colspan="2"><kbd>←</kbd> <kbd>→</kbd> <kbd>↓</kbd></td></tr>
         <tr><td>Master ses</td><td colspan="2"><kbd>PgUp</kbd> <kbd>PgDn</kbd></td></tr>
         <tr><td>Tempo (mouse)</td><td colspan="2">Deck üzerinde tekerlek</td></tr>
+        <tr><td>Ses ayarları (çıkış, kulaklık, gecikme)</td><td colspan="2"><kbd>F2</kbd></td></tr>
+        <tr><td>Kulaklık: SPLIT (sol kulak CUE, sağ kulak master)</td><td colspan="2">Mikserdeki SPLIT butonu</td></tr>
         <tr><td>Bu pencere</td><td colspan="2"><kbd>Esc</kbd> / <kbd>F1</kbd></td></tr>`;
   $('#helpT').innerHTML = h;
 }

@@ -30,7 +30,7 @@ export function setupBadges(decks: Deck[]): void {
     const cq = (a: string) => d.ch.querySelector(`[data-a="${a}"]`);
     badge(cq('killHigh'), kk('killHigh', 0)); badge(cq('killMid'), kk('killMid', 0)); badge(cq('killLow'), kk('killLow', 0));
     badge(cq('filter'), kk('filterDown', 1) + '/' + kk('filterUp', 1).replace('⇧', ''));
-    badge(cq('fx'), kk('fx', 0));
+    badge(cq('fx'), kk('fx', 0)); badge(cq('pfl'), kk('pfl', 1));
     badge(cq('fader'), kk('faderDown', 1) + '/' + kk('faderUp', 1).replace('⇧', ''));
   });
   badge($('#masterK'), 'PgUp/PgDn');

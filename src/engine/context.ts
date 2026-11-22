@@ -2,21 +2,25 @@ import deckWorkletUrl from './worklets/deck-processor.ts?worker&url';
 import limiterWorkletUrl from './worklets/limiter-processor.ts?worker&url';
 import keylockMixWorkletUrl from './worklets/keylock-mix-processor.ts?worker&url';
 import type { LimiterStats } from './worklets/protocol';
+import { audioSettings, LATENCY_HINT } from './settings';
 
 /**
  * Shared AudioContext + master bus:
- *   decks -> bus -> master (volume) -> limiter (worklet) -> speakers
+ *   decks -> bus -> master (volume) -> limiter (worklet) -> output routing (src/engine/output.ts)
+ *   decks (pre-fader CUE) -> cueBus -> headphone mix (src/engine/output.ts)
  * Created lazily on the first user gesture (browser autoplay rules).
  */
 export const engine: {
   ctx: AudioContext | null;
   bus: GainNode | null;
+  /** sum of the channels whose headphone CUE is on (pre-fader) */
+  cueBus: GainNode | null;
   master: GainNode | null;
   limiter: AudioWorkletNode | null;
   ready: Promise<void> | null;
   meter: { gr: number; peakIn: number; peakOut: number; overAt: number; limitAt: number };
 } = {
-  ctx: null, bus: null, master: null, limiter: null, ready: null,
+  ctx: null, bus: null, cueBus: null, master: null, limiter: null, ready: null,
   meter: { gr: 1, peakIn: 0, peakOut: 0, overAt: -1e9, limitAt: -1e9 },
 };
 
@@ -32,9 +36,10 @@ export function ensureCtx(): AudioContext {
     if (engine.ctx.state === 'suspended') void engine.ctx.resume();
     return engine.ctx;
   }
-  const ctx = new AudioContext({ latencyHint: 'interactive' });
+  const ctx = new AudioContext({ latencyHint: LATENCY_HINT[audioSettings.latency] });
   engine.ctx = ctx;
   engine.bus = ctx.createGain();
+  engine.cueBus = ctx.createGain();
   engine.master = ctx.createGain();
   engine.bus.connect(engine.master);
   engine.ready = (async () => {
@@ -48,7 +53,7 @@ export function ensureCtx(): AudioContext {
       if (s.peakIn > 1) m.overAt = now;          // would have clipped without the limiter
       if (s.gr < 0.89) m.limitAt = now;          // more than 1 dB of limiting
     };
-    engine.master!.connect(lim).connect(ctx.destination);
+    engine.master!.connect(lim);   // the output hook connects the limiter to the speakers
     engine.limiter = lim;
     for (const h of hooks) await h(ctx);
   })();
