@@ -7,12 +7,35 @@ Fazların asıl numaraları brief'tekiyle aynı; burada çalışma sırasıyla l
 3. **Faz 2** Analiz ve kütüphane ✅ — 2a kütüphane · 2b beatgrid + SYNC · 2c ton, renkli dalga formu, listeler
 4. **Faz 3** Mikser, efektler, pad'ler (öne alındı) — 3a pad modları + sampler ✅ · 3b Ritim FX + Kanal FX ✅ · 3c mikser ekstraları ✅ (4 deck Faz 5'e ertelendi)
 5. **Yayın**: GitHub'a yükleme + canlı site (GitHub Pages), her güncellemede testler ve otomatik yayın (3b'den sonra)
-6. **Faz 4** DJ Akademi — 4a altyapı + ders 1–4 + antrenör ✅ · 4b ders 5–10 + Geçiş Sınavı · 4c ders 11–14 + Kulak Egzersizi — set senaryosu oynatıcı ve **hayalet eller** (kullanılan kontrol parlar, Türkçe açıklama: "önce izle, sonra sen yap") dahil
+6. **Faz 4** DJ Akademi — 4a altyapı + ders 1–4 + antrenör ✅ · 4b ders 5–10 + Geçiş Sınavı ✅ · 4c ders 11–14 + Kulak Egzersizi — set senaryosu oynatıcı ve **hayalet eller** (kullanılan kontrol parlar, Türkçe açıklama: "önce izle, sonra sen yap") dahil
 7. **Faz 6a** Restoran Modu, set kaydı, canlı koç, geçiş asistanı
 8. **Faz 5** MIDI ve tuş değiştirme
 9. **Faz 6b** Reels çıktısı, hayalet mod, set planlayıcı
 10. **Ajan DJ** (yeni faz): Claude şarkıları analiz edip vuruşa oturan bir set senaryosu yazar, uygulama canlı çalar, her hamle ekranda görünür; geçişler arasında Claude planı günceller. Canlı yayınlar için (cd.md parçaları)
 11. **Faz 7** Cila ve yayın
+
+## 0.12.0 — Faz 4b · Geçiş dersleri ve Geçiş Sınavı (2026-11-22)
+### Eklendi
+- **Ders 5 · Beat, bar, phrase**: sayacı okumak, phrase başında hot cue koymak, ikinci şarkıyı phrase başında başlatmak. Yanlış anda basınca "3 vuruş geç, bir sonraki phrase başında tekrar dene" gibi anında uyarı.
+- **Ders 6 · EQ ile geçiş (bas değişimi)**: gelen şarkı basız girer (N), fader açılır, phrase başında bas el değiştirir (Z + N), giden şarkı çıkar. İki bas 1,5 sn'den uzun birlikte çalarsa uyarır.
+- **Ders 7 · Filtre ile geçiş**: giden şarkıyı high-pass filtreyle inceltip çıkarmak, sonra filtreyi ortalamak.
+- **Ders 8 · Loop ile uzatma**: R, T, ⇧T ve LOOP pad moduyla biten şarkıyı uzatmak.
+- **Ders 9 · Hot cue ile drop**: JUMP pad moduyla drop'u bulmak, hot cue koymak, phrase başında şarkıyı doğrudan drop'tan başlatmak.
+- **Ders 10 · Echo out**: Ritim FX'i A'ya verip ECHO açmak, fader'ı kesip yankıyı havada bırakmak, yeni şarkıyı phrase başında sokmak.
+- **Geçiş Sınavı** (Ders 6'dan sonra açılır): A'dan B'ye serbest geçiş; 4 başlıkta 25'er puan:
+  - **Phrase**: B phrase başında mı girdi (±¼ vuruş tam puan, ±1 vuruş kısmi).
+  - **Bas**: iki bas aynı anda kaç saniye çaldı.
+  - **Vuruş**: iki şarkı birlikte duyulurken vuruşlar ne kadar kaydı (20 ms üstü).
+  - **Seviye**: ses boşluğu ve limiter'a dayanma (clip).
+  - Ders sonu kartında her başlık için "şunu düzelt" önerisi.
+- Rozetler: Phrase Ustası, Geçiş Ustası (ders 6–10), Sınavı Geçti (80+).
+
+### Düzeltildi
+- **SYNC açıkken şarkı biraz erken/geç başlatılınca** vuruşlar ~10 saniyede hizalanıyordu (sınavda "vuruşlar kaydı" puanı düşüyordu). Artık 25 ms'den büyük fark tık sesi olmadan anında kapanıyor; küçük kaymalar yine yumuşakça düzeltiliyor.
+
+### Denendi (tarayıcıda, gerçek tuş olaylarıyla, phrase'e göre zamanlanarak)
+- Ders 5–10 baştan sona: hepsi 100/100.
+- Geçiş Sınavı: düzgün bas değişimiyle 100/100. Bilerek kötü geçiş (yanlış an, SYNC kapalı, önce A'yı kısmak): 37/100 ve doğru uyarılar ("8 vuruş sonra girdi", "hiç birlikte duyulmadı", "2,7 sn ses boşluğu").
 
 ## 0.11.0 — Faz 4a · DJ Akademi: altyapı ve ilk 4 ders (2026-11-22)
 ### Eklendi

@@ -21,8 +21,11 @@ export interface Step {
   keys?: string;
   /** control to light up */
   at?: string | ((c: Ctx) => Element | null);
-  /** done? polled ~20× per second; steps without a check get a "Devam" button */
-  check?: (c: Ctx, s: StepState) => boolean;
+  /**
+   * done? polled ~20× per second; steps without a check get a "Devam" button.
+   * Returning a string = not done, and show this as feedback (e.g. "Erken bastın, tekrar dene").
+   */
+  check?: (c: Ctx, s: StepState) => boolean | string;
   /** the check must stay true this long (ms) */
   hold?: number;
   hint?: string;
@@ -46,6 +49,8 @@ export interface Lesson {
   learned: string[];
   /** custom final score (practice modes) */
   score?: (c: Ctx, secs: number, base: number) => number;
+  /** "şunu düzelt" lines for the summary card (practice / exam) */
+  feedback?: () => string[];
   practice?: boolean;
 }
 
@@ -116,8 +121,9 @@ function tick(): void {
   if (demo || passed) return;
   const s = lesson.steps[idx];
   if (!s.check) return;
-  const ok = s.check(ctx, st), now = performance.now();
-  if (!ok) { holdSince = 0; return; }
+  const res = s.check(ctx, st), now = performance.now();
+  if (typeof res === 'string') { holdSince = 0; if (res) render(res, 'hint'); return; }
+  if (!res) { holdSince = 0; return; }
   if (s.hold) {
     if (!holdSince) holdSince = now;
     const left = s.hold - (now - holdSince);
@@ -168,7 +174,8 @@ async function finish(): Promise<void> {
   const l = lesson!, secs = practiceSecs();
   const base = maxPts ? Math.round(earned / maxPts * 100) : 100;
   const score = Math.max(0, Math.min(100, Math.round(l.score ? l.score(ctx, secs, base) : base)));
-  if (l.practice) progress.trainerBest = Math.max(progress.trainerBest, score);
+  if (l.id === 'trainer') progress.trainerBest = Math.max(progress.trainerBest, score);
+  if (l.id === 'exam') progress.examBest = Math.max(progress.examBest, score);
   const r = finishLesson(progress, l.id, score, secs);
   stopLesson(false);
   save();
@@ -181,6 +188,7 @@ function showSummary(l: Lesson, score: number, stars: number, secs: number, xp: 
     <div class="sumStars">${'★'.repeat(stars)}<span>${'★'.repeat(3 - stars)}</span></div>
     <h2>${l.practice ? l.title : `Ders ${l.no} bitti: ${l.title}`}</h2>
     <div class="sumRow"><b>${score}</b><small>/ 100 puan</small><b>+${xp}</b><small>XP</small><b>${m}:${String(s).padStart(2, '0')}</b><small>süre</small></div>
+    ${l.feedback ? `<h3>Değerlendirme</h3><ul class="fb">${l.feedback().map(x => `<li>${x}</li>`).join('')}</ul>` : ''}
     ${l.learned.length ? `<h3>Öğrendiklerin</h3><ul>${l.learned.map(x => `<li>${x}</li>`).join('')}</ul>` : ''}
     ${badges.length ? `<h3>Yeni rozet</h3><div class="badges">${badges.map(b => `<span class="badge">${BADGES[b].icon} ${BADGES[b].name}</span>`).join('')}</div>` : ''}
     <div class="sumBtns"><button class="hbtn" id="sumAgain">Tekrar</button><button class="hbtn" id="sumMenu">Akademi</button><button class="hbtn primary" id="sumNext">Devam</button></div>`;

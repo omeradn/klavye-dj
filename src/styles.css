@@ -339,3 +339,5 @@ kbd{background:#000;border:1px solid #444b57;border-bottom-width:2px;border-radi
 .sumBtns{display:flex;gap:8px;justify-content:center;margin-top:16px}
 /* lesson rules: hidden tempo numbers */
 .acad-nobpm .dbpm,.acad-nobpm .dinfo .tp,.acad-nobpm .phase,.acad-nobpm #fxBpm,.acad-nobpm .dtitle,.acad-nobpm .dinfo .key{visibility:hidden}
+#summary ul.fb{list-style:none;padding-left:0;max-width:420px}
+#summary ul.fb li{margin:6px 0;font-size:13px}

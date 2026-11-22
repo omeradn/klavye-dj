@@ -39,3 +39,19 @@ describe('academy progress', () => {
     expect(dayKey(new Date(2026, 0, 5))).toBe('2026-01-05');
   });
 });
+
+import { phraseOffset, barTime } from '../src/academy/mixhelp';
+
+describe('phrase timing', () => {
+  const g = { bpm: 120, offset: 0, meter: '4/4' as const, phraseBar: 0 };   // 1 beat = 0.5 s, phrase = 32 beats = 16 s
+  it('measures beats to the nearest phrase start', () => {
+    expect(phraseOffset(g, 16, 8)).toBeCloseTo(0, 9);
+    expect(phraseOffset(g, 16.25, 8)).toBeCloseTo(0.5, 9);
+    expect(phraseOffset(g, 15.5, 8)).toBeCloseTo(-1, 9);
+    expect(phraseOffset({ ...g, phraseBar: 2 }, 4, 8)).toBeCloseTo(0, 9);
+  });
+  it('finds bar times', () => {
+    expect(barTime(g, 32)).toBe(64);
+    expect(barTime({ ...g, offset: 0.3 }, 1)).toBeCloseTo(2.3, 9);
+  });
+});

@@ -14,7 +14,7 @@ export const CURRICULUM: { no: number; title: string }[] = [
 const A = (c: Ctx) => c.decks[0], B = (c: Ctx) => c.decks[1];
 
 /** Fresh decks with the given demo tracks (index into DEMOS), stopped at the start, controls centred. */
-async function prep(c: Ctx, a?: number, b?: number): Promise<void> {
+export async function prep(c: Ctx, a?: number, b?: number): Promise<void> {
   for (const d of c.decks) d.resetForLesson();
   c.xf.set(0);
   if (a != null) await A(c).loadDemo(a);

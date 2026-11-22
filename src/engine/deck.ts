@@ -90,6 +90,7 @@ export class Deck {
   /** SYNC latched: follows the other deck's tempo and keeps the beats aligned */
   syncOn = false;
   private syncBend = 0;
+  private syncJumpAt = 0;
   private syncSetting = false;
   /** saved-data key of the loaded song ('' = none) */
   sig = '';
@@ -680,8 +681,11 @@ export class Deck {
     if (e != null && this.grid && this.playing && this.other.playing && !this.bend && !this.jogBend && !this.scratching
       && !this.other.bend && !this.other.jogBend && now - this.jogStamp > 500) {
       const sec = e * pulseLen(this.grid);
-      if (Math.abs(e) > 0.25) { this.post({ t: 'jump', d: sec * this.sr }); this.pos += sec * this.sr; }
-      else if (Math.abs(sec) > 0.002) bend = clamp(sec * 0.8, -0.01, 0.01);   // closes the gap in about a second
+      // a clear flam (> 25 ms, e.g. started a little early) is fixed at once with a click-free jump;
+      // small drift is pulled in gently with a tiny tempo bend
+      if (Math.abs(sec) > 0.025) {
+        if (now - this.syncJumpAt > 400) { this.syncJumpAt = now; this.post({ t: 'jump', d: sec * this.sr }); this.pos += sec * this.sr; }
+      } else if (Math.abs(sec) > 0.002) bend = clamp(sec * 0.8, -0.01, 0.01);
     }
     if (bend !== this.syncBend) { this.syncBend = bend; this.applyRate(); }
   }
