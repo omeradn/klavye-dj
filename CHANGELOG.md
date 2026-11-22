@@ -3,13 +3,37 @@
 ## Yol haritası (onaylanan sıra)
 0. Kurulum ve taşıma ✅
 1. Ses motoru ✅ — 1a (worklet, limiter, demo) · 1b key lock · 1c kulaklık cue
-2. Analiz ve kütüphane (beatgrid, gerçek SYNC, ton, Türk ritimleri, IndexedDB)
+2. Analiz ve kütüphane ✅ — 2a kütüphane · 2b beatgrid + SYNC · 2c ton, renkli dalga formu, listeler
 3. Akademi (dersler, beatmatch antrenörü, geçiş sınavı)
 4. Restoran Modu, set kaydı, canlı koç, geçiş asistanı
 5. Gelişmiş FX ve pad modları
 6. MIDI ve tuş değiştirme
 7. Reels çıktısı, hayalet mod, set planlayıcı
 8. Cila ve yayın
+
+## 0.7.0 — Faz 2c · Ton, renkli dalga formu, listeler (2026-11-22)
+### Eklendi
+- **Ton tespiti** (kromagram + ton profilleri) ve **Ton Çarkı**: tonlar beşli çemberine dizilir, 1–12 arası numaralanır (Do majör = 1M, La minör = 1m). Aynı numara ya da ±1 komşu = güvenle karışır.
+- Deck'te çalan ton (TON kaydırma ve key lock dahil) ve çark numarası. Renk, diğer deck'le uyumu gösterir: yeşil uyumlu, sarı riskli, kırmızı çatışır.
+- **3 renkli dalga formu**: mor = bas (kick, bas hattı), yeşil = orta (vokal, synth), beyaz = tiz (hi-hat, zil).
+- **Zoom**: dalga formlarının üstünde fare tekerleği (2–40 saniye, iki deck birlikte).
+- Kütüphanede **Ton** ve **Enerji (1–10)** sütunları, ikisine göre sıralama. Ton sütunu çalan şarkıya göre renklenir.
+- **✓ Uyumlu** filtresi: çalan şarkıdan sonra gidecek şarkılar (ton uyumlu ve tempo ±%6; yarım/çift tempo dahil).
+- **Playlist'ler**: "+ Liste" ile oluştur, satırı soldaki listenin adına sürükleyerek ekle, liste içinde × ile çıkar.
+- **Geçmiş**: çalmaya başlanan her şarkı tarih/saatle kaydedilir.
+- **Etiketler**: Etiket hücresine tıkla, virgülle yaz (ör. akşam, sakin). Arama etiketleri de bulur.
+- Eski analizler (ton/enerji yoksa) arka planda tamamlanır.
+
+### Değişti
+- Minör demo parçaların akor dizisi i–VI–VII–i oldu (önceki dizi kulağa da relatif majör gibi geliyordu, ton belirsizdi).
+
+### Ölçüldü
+- 6 farklı tonda akor dizisi ve 4 demo parçanın tonu doğru bulundu.
+- Tarayıcıda: A = Am (1m), B = Cm (10m) → kırmızı. B'ye TON −3 → Am (1m) → iki deck de yeşil.
+
+### Bilinen eksikler
+- Ton tespiti relatif majör/minör'ü (ör. Am / C) karıştırabilir; çark numarası yine de aynı olduğu için uyum önerisi doğru kalır.
+- Enerji kaba bir tahmindir (ses yüksekliği, ritim yoğunluğu, parlaklık, tempo). Demo parçalar aynı düzenle yapıldığı için enerjileri birbirine yakın; demolarda enerji gösterilmez.
 
 ## 0.6.0 — Faz 2b · Beatgrid ve gerçek SYNC (2026-11-22)
 ### Eklendi

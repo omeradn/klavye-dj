@@ -2,7 +2,7 @@
 
 Tarayıcıda çalışan, klavye ve mouse ile kontrol edilen DJ uygulaması. Hedef: profesyonel bir DJ yazılımı + DJ'liği adım adım öğreten bir akademi + restoran setleri için özel modlar.
 
-> Durum: **Faz 2b tamam** — ses motoru, kulaklık cue, kütüphane, beatgrid, gerçek SYNC (vuruş kilidi), quantize, Türk ritimleri için ölçü seçimi. Yol haritası için [CHANGELOG.md](CHANGELOG.md).
+> Durum: **Faz 2 tamam** — ses motoru, kulaklık cue, kütüphane (playlist, geçmiş, etiket), beatgrid, gerçek SYNC, quantize, Türk ritimleri, ton tespiti ve Ton Çarkı, 3 renkli dalga formu. Yol haritası için [CHANGELOG.md](CHANGELOG.md).
 
 ## Gerekenler
 - Windows'ta **Node.js 20 veya üstü** (kontrol: `node -v`)
@@ -92,6 +92,11 @@ Jog: VINYL açıkken iç kısmı tutup çevirmek = scratch; dış halka = tempo 
 - **SYNC** tempoyu eşitler ve vuruşları kilitler. Dalga formlarının arasındaki **FAZ** çubuğu yeşil ve ortadaysa vuruşlar üst üste.
 - Grid yanlışsa GRID satırı: ◁ ▷ kaydır, **1.1** = "bu vuruş bar başı", BPM− / BPM+. Ölçü butonu: 4/4, 6/8, 7/8, 9/8, 10/8 (aksak ritimler için). Düzeltmeler şarkıyla birlikte saklanır.
 - **QUANT** açıkken hot cue, cue ve loop vuruşa oturur.
+
+## Ton Çarkı
+- Her şarkının tonu bulunur ve 1–12 arası bir numarayla gösterilir (ör. `Am · 1m`). Aynı numara ya da bir komşu numara (aynı harfle) = rahat karışır.
+- Deck'teki ton yazısı yeşilse diğer deck'le uyumlu, sarıysa riskli, kırmızıysa çatışır. TON ♯/♭ ile tonu kaydırarak uyumlu hale getirebilirsin.
+- Kütüphanede **✓ Uyumlu**: çalan şarkıdan sonra tonu ve temposu uyan şarkıları gösterir.
 
 ## Kulaklık
 - Her kanaldaki **🎧 CUE** o kanalı kulaklığa gönderir (fader'dan önce, yani kanal kapalıyken de duyulur).

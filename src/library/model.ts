@@ -1,5 +1,6 @@
 /** Pure library helpers (no DOM / storage) so they can be unit-tested. */
 import type { Grid } from '../analysis/grid';
+import { compat, wheelNo, type Key } from '../analysis/key';
 
 export const AUDIO_EXT = /\.(mp3|wav|m4a|aac|ogg|oga|opus|flac|aiff?|webm)$/i;
 
@@ -12,6 +13,11 @@ export interface Track {
   sig?: string;
   bpm?: number | null;
   grid?: Grid | null;
+  /** undefined = not analysed yet, null = no clear key */
+  key?: Key | null;
+  /** 1–10 */
+  energy?: number;
+  tags?: string[];
   dur?: number;
   /** built-in demo index */
   demo?: number;
@@ -21,7 +27,7 @@ export interface Track {
   played?: boolean;
 }
 
-export type SortKey = 'name' | 'folder' | 'bpm' | 'dur';
+export type SortKey = 'name' | 'folder' | 'bpm' | 'dur' | 'key' | 'energy';
 
 /** Cache key for a file: same name + size + date = same song (re-analysis not needed). */
 export const fileSig = (f: { name: string; size: number; lastModified: number }): string =>
@@ -43,7 +49,7 @@ export function fold(s: string): string {
 export function matches(t: Track, q: string): boolean {
   const words = fold(q).split(/\s+/).filter(Boolean);
   if (!words.length) return true;
-  const hay = fold(t.name + ' ' + t.folder);
+  const hay = fold(t.name + ' ' + t.folder + ' ' + (t.tags ?? []).join(' '));
   return words.every(w => {
     if (hay.includes(w)) return true;
     const n = Number(w.replace(',', '.'));
@@ -56,6 +62,8 @@ export function sortTracks(list: Track[], key: SortKey, dir: 1 | -1): Track[] {
     switch (key) {
       case 'bpm': return t.bpm ?? (dir > 0 ? Infinity : -Infinity);   // unknown BPM always last
       case 'dur': return t.dur ?? (dir > 0 ? Infinity : -Infinity);
+      case 'energy': return t.energy ?? (dir > 0 ? Infinity : -Infinity);
+      case 'key': return t.key ? wheelNo(t.key) * 2 + (t.key.minor ? 0 : 1) : (dir > 0 ? Infinity : -Infinity);
       case 'folder': return fold(t.folder + ' ' + t.name);
       default: return fold(t.name);
     }
@@ -65,4 +73,14 @@ export function sortTracks(list: Track[], key: SortKey, dir: 1 | -1): Track[] {
     if (typeof x === 'number' && typeof y === 'number') return (x - y) * dir || 0;
     return String(x).localeCompare(String(y), 'tr') * dir;
   });
+}
+
+/**
+ * Good next song for a deck playing `key` at `bpm`: harmonically safe (same / relative / neighbour on the wheel)
+ * and within ±6 % tempo (half / double time counts too).
+ */
+export function fitsNext(t: Track, key: Key | null, bpm: number | null): boolean {
+  if (bpm && t.bpm && ![1, 2, 0.5].some(f => Math.abs(t.bpm! * f / bpm - 1) <= 0.06)) return false;
+  if (key && t.key) return compat(key, t.key) === 2;
+  return !key || !!t.key;
 }

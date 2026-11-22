@@ -49,7 +49,7 @@ export function renderDemo(spec: DemoSpec, sr: number, sections: Section[] = DEM
   const mL = new Float32Array(N), mR = new Float32Array(N);     // music (gets sidechained)
   const noise = rng(spec.seed);
   const prog = spec.minor
-    ? [[0, 3, 7], [8, 12, 15], [3, 7, 10], [10, 14, 17]]
+    ? [[0, 3, 7], [8, 12, 15], [10, 14, 17], [0, 3, 7]]
     : [[0, 4, 7], [7, 11, 14], [9, 12, 16], [5, 9, 12]];
   const kicks: number[] = [];
 

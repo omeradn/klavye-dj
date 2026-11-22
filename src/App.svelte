@@ -52,6 +52,7 @@
   <div class="lbar">
     <b>KÜTÜPHANE</b>
     <input id="libSearch" type="search" placeholder="Ara: şarkı, klasör ya da BPM (ör. 124)" autocomplete="off">
+    <button class="hbtn" id="libFits">✓ Uyumlu</button>
     <span id="libStat" class="note"></span>
     <div class="sp"></div>
     <button class="hbtn" id="libDir" title="Bir müzik klasörü ekle (alt klasörler dahil). Tarayıcı klasörü hatırlar.">+ Klasör</button>
@@ -60,12 +61,17 @@
     <input type="file" id="libFileInput" accept="audio/*" multiple hidden>
   </div>
   <div id="libRoots" class="roots"></div>
-  <div class="ltable"><table id="libT">
-    <thead><tr><th data-k="name">Şarkı</th><th data-k="folder">Klasör</th><th data-k="bpm" class="num">BPM</th><th data-k="dur" class="num">Süre</th><th class="ld">Yükle</th></tr></thead>
-    <tbody id="libBody"></tbody>
-  </table></div>
+  <div class="lmain">
+    <nav id="libSide"></nav>
+    <div class="ltable"><table id="libT">
+      <thead><tr><th data-k="name">Şarkı</th><th data-k="folder" id="libFolderTh">Klasör</th><th data-k="bpm" class="num">BPM</th>
+        <th data-k="key" title="Ton · çark numarası. Renk: çalan şarkıyla uyum (yeşil uyumlu, sarı riskli, kırmızı çatışır)">Ton</th>
+        <th data-k="energy" class="num" title="Enerji 1–10">Enerji</th><th data-k="dur" class="num">Süre</th><th>Etiket</th><th class="ld">Yükle</th></tr></thead>
+      <tbody id="libBody"></tbody>
+    </table></div>
+  </div>
   <div id="libMore" class="note"></div>
-  <p class="note">Çift tık: boştaki deck'e yükle · A / B: o deck'e yükle · Başlığa tıkla: sırala · Esc: aramayı temizle</p>
+  <p class="note">Çift tık: boştaki deck'e yükle · A / B: o deck'e yükle · Başlığa tıkla: sırala · Etikete tıkla: düzenle · Satırı soldaki listeye sürükle: listeye ekle · ✓ Uyumlu: çalan şarkıdan sonra uyumlu gidecekler · Dalga formunda tekerlek: zoom</p>
 </section>
 
 <div id="help"><div class="box">

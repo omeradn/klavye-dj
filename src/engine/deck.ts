@@ -9,6 +9,8 @@ import {
 import { fileSig } from '../library/model';
 import { loadMeta, saveMeta } from '../library/trackmeta';
 import { computePeaks, PPS } from '../analysis/peaks';
+import { computeBands, energyRating } from '../analysis/features';
+import { compat, detectKey, keyName, shiftKey, wheelCode, type Key } from '../analysis/key';
 import { DEMOS, renderDemo } from '../demo/synth';
 import type { DeckIn, DeckState } from './worklets/protocol';
 import SignalsmithStretch, { type StretchNode } from 'signalsmith-stretch';
@@ -29,7 +31,21 @@ const KEYLOCK_BLOCK_MS = 120;
  * Audio is played by the 'deck' AudioWorklet (src/engine/worklets/deck-processor.ts);
  * this class keeps a mirror of its state for the UI.
  */
+/** Analysis results for a song (cached by the library). */
+export interface TrackInfo {
+  bpm: number | null;
+  dur: number;
+  grid: Grid | null;
+  key?: Key | null;
+  energy?: number;
+}
+
+const BAND_COL = ['#7a5cff', '#3ce37a', '#e9ecf1'];   // low · mid · high
+
 export class Deck {
+  /** seconds of real time shown across the scrolling waveform (shared by both decks; wheel on it = zoom) */
+  static span = 7;
+
   readonly id: string;
   readonly i: number;
   readonly color: string;
@@ -51,6 +67,10 @@ export class Deck {
   bpm: number | null = null;
   /** beatgrid (null = unknown); `bpm` mirrors grid.bpm */
   grid: Grid | null = null;
+  /** detected musical key (before key shift / tempo) */
+  key: Key | null = null;
+  energy = 0;
+  bands: Float32Array | null = null;
   /** phrase length in bars for the counter and the red phrase lines */
   phraseBars = 8;
   /** QUANTIZE: cue, hot cue and loops snap to the grid; hot cue jumps keep the beat phase */
@@ -80,7 +100,10 @@ export class Deck {
   vu = 0;
   wired = false;
   /** called after a file was analysed here (the library caches the result) */
-  onAnalyzed?: (f: File, bpm: number | null, dur: number, grid: Grid | null) => void;
+  onAnalyzed?: (f: File, info: TrackInfo) => void;
+  /** called the first time a loaded song starts playing (history) */
+  onPlayed?: (sig: string, title: string) => void;
+  private logged = false;
 
   // controls
   tempoF!: Fader; chF!: Fader;
@@ -150,7 +173,7 @@ export class Deck {
     this.el.innerHTML = `
       <div class="dtop"><div class="dname">${L}</div><div class="dtitle">Şarkı yok — sürükle bırak, LOAD ya da DEMO</div>
         <div class="dbpm" title="Tık: ×2 · Shift+tık: ½">— <small>BPM</small></div></div>
-      <div class="dinfo"><span class="rem">-0:00</span><span class="tp">±0.00%</span><span class="kl">KEY LOCK</span><span class="lp"></span><span class="bars" title="Phrase · bar (tıkla: phrase uzunluğu 4/8/16/32 bar)"></span><span class="leds"></span></div>
+      <div class="dinfo"><span class="rem">-0:00</span><span class="tp">±0.00%</span><span class="kl">KEY LOCK</span><span class="key" title="Ton (tempo ve TON kaydırma dahil) · çark numarası. Yeşil: diğer deck ile uyumlu, sarı: riskli, kırmızı: çatışır"></span><span class="lp"></span><span class="bars" title="Phrase · bar (tıkla: phrase uzunluğu 4/8/16/32 bar)"></span><span class="leds"></span></div>
       <div class="dbody">
         <div class="jogwrap"><div class="jog" data-a="jog" title="İç kısım: scratch (VINYL açıkken) · Dış halka: tempo dürtme"><div class="platter"><i></i></div><div class="jogc"><div><b class="jt">0:00</b><span class="jr">-0:00</span></div></div></div></div>
         <div class="tcol"><span class="lbl">TEMPO</span><div class="tf" data-a="tempo"></div>
@@ -206,7 +229,7 @@ export class Deck {
     const q = (a: string) => this.q(a);
     const sel = (s: string) => this.el.querySelector<HTMLElement>(s)!;
     this.ui = {
-      title: sel('.dtitle'), bpm: sel('.dbpm'), rem: sel('.rem'), tp: sel('.tp'), kl: sel('.kl'), lp: sel('.lp'),
+      title: sel('.dtitle'), bpm: sel('.dbpm'), rem: sel('.rem'), tp: sel('.tp'), kl: sel('.kl'), lp: sel('.lp'), key: sel('.key'),
       jt: sel('.jt'), jr: sel('.jr'), platter: sel('.platter'), ksv: sel('.ksv'), bars: sel('.bars'), leds: sel('.leds'),
       mtr: sel('.mtr'),
     };
@@ -407,7 +430,7 @@ export class Deck {
 
   /* ---------- loading ---------- */
   /** Load a song file. `known` (from the library cache) skips the analysis. */
-  async load(f: File, known?: { bpm: number | null; grid: Grid | null }): Promise<void> {
+  async load(f: File, known?: Partial<TrackInfo>): Promise<void> {
     const ctx = ensureCtx();
     if (this.playing && !confirm(`Deck ${this.id} şu an çalıyor. Yine de yeni şarkı yüklensin mi?`)) return;
     this.ui.title.textContent = f.name.replace(/\.[^.]+$/, '');
@@ -416,12 +439,17 @@ export class Deck {
       const buf = await ctx.decodeAudioData(await f.arrayBuffer());
       const L = buf.getChannelData(0), R = buf.numberOfChannels > 1 ? buf.getChannelData(1) : L;
       this.peaks = computePeaks(L, buf.sampleRate);
-      let grid = known?.grid ?? null;
+      this.bands = computeBands(L, buf.sampleRate);
+      let grid = known?.grid ?? null, key = known?.key, energy = known?.energy;
+      const fresh = !grid || key === undefined || energy === undefined;
       if (!grid) {
-        const bpm = known ? known.bpm : detectBPM(L, buf.sampleRate);
+        const bpm = known?.bpm !== undefined ? known.bpm : detectBPM(L, buf.sampleRate);
         grid = bpm ? analyzeGrid(L, buf.sampleRate, bpm) ?? { bpm, offset: 0, meter: '4/4', phraseBar: 0 } : null;
-        this.onAnalyzed?.(f, grid?.bpm ?? null, buf.duration, grid);
       }
+      if (key === undefined) key = detectKey(L, buf.sampleRate);
+      if (energy === undefined) energy = energyRating(L, buf.sampleRate, grid?.bpm);
+      this.key = key; this.energy = energy;
+      if (fresh) this.onAnalyzed?.(f, { bpm: grid?.bpm ?? null, dur: buf.duration, grid, key, energy });
       this.srcFile = f;
       await this.setTrack(f.name.replace(/\.[^.]+$/, ''), new Float32Array(L), new Float32Array(R), buf.sampleRate, grid, fileSig(f));
     } catch {
@@ -439,6 +467,8 @@ export class Deck {
     await new Promise(r => setTimeout(r, 30)); // let the toast paint
     const { L, R } = renderDemo(spec, ctx.sampleRate);
     this.peaks = computePeaks(L, ctx.sampleRate);
+    this.bands = computeBands(L, ctx.sampleRate);
+    this.key = { tonic: spec.root % 12, minor: spec.minor };
     this.srcFile = null;
     // demos are made on an exact grid: bar 1 at 0 s, phrases of 8 bars
     await this.setTrack(spec.name, L, R, ctx.sampleRate, { bpm: spec.bpm, offset: 0, meter: '4/4', phraseBar: 0 }, 'demo:' + spec.name);
@@ -452,6 +482,7 @@ export class Deck {
     Object.assign(this, { pos: 0, posAt: 0, playing: false, audible: false, cuePt: meta?.cue ?? 0, cuePreview: false,
       hot: meta?.hot ? [...meta.hot] : [null, null, null, null], loopOn: false, reverse: false, censor: false, ovImg: null, syncOn: false, syncBend: 0 });
     this.setGrid(meta?.grid ?? grid, false);
+    this.logged = false;
     this.sig = sig;
     const bpm = this.bpm ? +this.bpm.toFixed(2) : null;
     this.post({ t: 'load', L, R }, [L.buffer, R.buffer]);
@@ -478,6 +509,12 @@ export class Deck {
     this.ovImg = c;
   }
 
+  /** The key you actually hear: detected key + TON shift (+ tempo, when key lock is off). */
+  playingKey(): Key | null {
+    if (!this.key || !this.has) return null;
+    return shiftKey(this.key, this.keyShift + (this.keyLock ? 0 : 12 * Math.log2(1 + this.tempo)));
+  }
+
   /* ---------- beatgrid ---------- */
 
   setGrid(g: Grid | null, save = true): void {
@@ -487,7 +524,7 @@ export class Deck {
     this.updLoop();
     if (save) {
       this.persist();
-      if (this.srcFile) this.onAnalyzed?.(this.srcFile, this.bpm, this.duration, g);
+      if (this.srcFile) this.onAnalyzed?.(this.srcFile, { bpm: this.bpm, dur: this.duration, grid: g, key: this.key, energy: this.energy });
     }
   }
 
@@ -588,6 +625,7 @@ export class Deck {
 
   /* ---------- actions ---------- */
   private setPlaying(on: boolean): void {
+    if (on && !this.logged && this.sig) { this.logged = true; this.onPlayed?.(this.sig, this.title); }
     this.playing = on;
     this.audible = on || this.audible;
     this.post({ t: 'play', on });
@@ -780,6 +818,9 @@ export class Deck {
     const tp = this.tempo * 100;
     setText(ui.tp, (tp >= 0 ? '+' : '') + tp.toFixed(2) + '%');
     ui.kl.style.color = this.keyLock ? 'var(--green)' : '';
+    const k = this.playingKey(), ok = this.other.playingKey();
+    setText(ui.key, k ? `${keyName(k)} · ${wheelCode(k)}` : '');
+    ui.key.className = 'key' + (k && ok ? ' c' + compat(k, ok) : '');
     setText(ui.ksv, (this.keyShift > 0 ? '+' : '') + this.keyShift);
     ui.ksv.classList.toggle('on', this.keyShift !== 0);
     const bpm = this.bpm ? (this.bpm * (1 + this.tempo)).toFixed(this.bpm % 1 ? 2 : 1) : '—';
@@ -820,17 +861,25 @@ export class Deck {
     g.fillStyle = '#0f1114'; g.fillRect(0, 0, W, H);
     // 7 s of *real* time across the view: at the same BPM both decks show beats the same width apart
     const sp = this.playing ? Math.max(0.25, this.speed()) : 1 + this.tempo;
-    const span = 7, x0 = W / 2, sx = W / span / sp;          // pixels per second of track
+    const span = Deck.span, x0 = W / 2, sx = W / span / sp;  // pixels per second of track
     const X = (tt: number) => x0 + (tt - t) * sx;
-    if (this.peaks) {
-      const p = this.peaks, n = p.length, step = Math.max(1, Math.floor(W / 900));
-      for (let x = 0; x < W; x += step) {
-        const tt = t + (x - x0) / sx, i = Math.floor(tt * PPS);
-        if (i < 0 || i >= n) continue;
-        const h = p[i] * H * 0.92;
-        g.fillStyle = tt < t ? this.color + '88' : this.color;
-        g.fillRect(x, (H - h) / 2, step, h);
+    if (this.bands) {
+      // 3 colour bands, drawn on top of each other: low (widest) · mid · high
+      const b = this.bands, n = b.length / 3, step = Math.max(1, Math.floor(W / 900));
+      const fpp = step / sx * PPS;                              // analysis frames per drawn column
+      for (let band = 0; band < 3; band++) {
+        g.fillStyle = BAND_COL[band];
+        for (let x = 0; x < W; x += step) {
+          const tt = t + (x - x0) / sx, i0 = Math.floor(tt * PPS), i1 = Math.max(i0 + 1, Math.floor(i0 + fpp));
+          if (i1 <= 0 || i0 >= n) continue;
+          let m = 0;
+          for (let i = Math.max(0, i0); i < i1 && i < n; i++) { const v = b[i * 3 + band]; if (v > m) m = v; }
+          const h = m * H * (band === 0 ? 0.95 : band === 1 ? 0.8 : 0.6);
+          g.globalAlpha = tt < t ? 0.45 : 1;
+          g.fillRect(x, (H - h) / 2, step, h);
+        }
       }
+      g.globalAlpha = 1;
       const gr = this.grid;
       if (gr) {
         const pl = pulseLen(gr), half = W / 2 / sx;

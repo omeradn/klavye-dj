@@ -202,3 +202,29 @@ kbd{background:#000;border:1px solid #444b57;border-bottom-width:2px;border-radi
 .phase .pm i.near{background:var(--amber)}
 .phase .pm i.ok{background:var(--green)}
 #phT{font:12px ui-monospace,monospace;color:var(--txt);letter-spacing:0}
+
+/* key, tone wheel colours, library 2c */
+.dinfo .key{font-weight:600;color:var(--txt)}
+.key.c2,#libT td.ky.c2{color:var(--green)}
+.key.c1,#libT td.ky.c1{color:var(--amber)}
+.key.c0,#libT td.ky.c0{color:var(--red)}
+#libT td.ky small{color:var(--mut);margin-left:3px}
+#libT td.ky{white-space:nowrap;width:70px}
+#libT td.en{position:relative;width:56px}
+#libT td.en i{position:absolute;left:8px;bottom:5px;height:3px;max-width:calc(100% - 16px);background:linear-gradient(90deg,var(--green),var(--amber),var(--red));border-radius:2px;opacity:.8}
+#libT td.tg{cursor:pointer;max-width:200px;white-space:nowrap;overflow:hidden}
+#libT td.tg span{display:inline-block;background:#26303c;color:#cfe3ff;border-radius:9px;padding:0 7px;margin-right:3px;font-size:11px}
+#libT td.tg em{color:#454c58;font-style:normal}
+#libT tr.gone td{opacity:.45}
+#libT .ld .rm{color:var(--mut)}
+#libFits.on{border-color:var(--green);color:var(--green)}
+.lmain{display:grid;grid-template-columns:170px 1fr;gap:10px;margin-top:4px}
+#libSide ul{list-style:none;margin:0 0 8px;padding:0}
+#libSide li{display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:7px;cursor:pointer;font-size:12px}
+#libSide li small{color:var(--mut);margin-left:auto}
+#libSide li:hover{background:#1b1f25}
+#libSide li.on{background:#262b33;color:var(--txt)}
+#libSide li.drop{outline:2px dashed var(--green)}
+#libSide li button{background:none;border:0;color:var(--mut);cursor:pointer;padding:0 3px}
+#libSide .note{font-size:11px}
+@media (max-width:700px){.lmain{grid-template-columns:1fr}}

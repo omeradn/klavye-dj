@@ -9,7 +9,7 @@ import { buildHelpTable, toggleHelp } from './ui/help';
 import { audioSettings } from './engine/settings';
 import { buildOutput, outputNodes, phones, setCueMix, setPhonesLevel, setSplit } from './engine/output';
 import { settingsOpen, setupSettings, toggleSettings } from './ui/settings';
-import { rememberAnalysis, setupLibrary } from './library/library';
+import { setupLibrary } from './library/library';
 
 let started = false;
 
@@ -63,6 +63,13 @@ export function initApp(): void {
     grBar.style.width = Math.min(100, grDb / 12 * 100) + '%';
     setText(grTxt, (grDb > 0.05 ? '-' : '') + grDb.toFixed(1) + ' dB');
   };
+  // wheel on the scrolling waveforms = zoom (both decks together, so beats stay comparable)
+  document.querySelector('.waves')!.addEventListener('wheel', e => {
+    const w = e as WheelEvent;
+    w.preventDefault();
+    Deck.span = Math.min(40, Math.max(2, Deck.span * (w.deltaY > 0 ? 1.2 : 1 / 1.2)));
+  }, { passive: false });
+
   // phase meter: how far deck B's beats are from deck A's (in ms of real time)
   const phI = $('#phI'), phT = $('#phT');
   const phase = () => {
@@ -93,7 +100,6 @@ export function initApp(): void {
 
   setupBadges(decks);
   setupSettings();
-  decks.forEach(d => { d.onAnalyzed = rememberAnalysis; });
   void setupLibrary(decks);
   buildHelpTable();
   $('#keysBtn').onclick = () => document.body.classList.toggle('nokeys');
