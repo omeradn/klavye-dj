@@ -4,6 +4,12 @@ Tarayıcıda çalışan, klavye ve mouse ile kontrol edilen DJ uygulaması. Hede
 
 > Durum: **Faz 3b tamam** (Ritim FX, Kanal FX) · **Faz 3a** (8 pad, sampler) · **Faz 2 tamam** — ses motoru, kulaklık cue, kütüphane (playlist, geçmiş, etiket), beatgrid, gerçek SYNC, quantize, Türk ritimleri, ton tespiti ve Ton Çarkı, 3 renkli dalga formu. Yol haritası için [CHANGELOG.md](CHANGELOG.md).
 
+## Canlı sürüm
+**https://omeradn.github.io/klavye-dj/** — kurulum gerekmez, Chrome ya da Edge ile açılır.
+İnternetsiz kullanmak için tek dosya: https://omeradn.github.io/klavye-dj/klavye-dj-tek-dosya.html (sağ tık → Farklı kaydet).
+Her `main` güncellemesinde GitHub testleri çalıştırır; geçerse site birkaç dakika içinde kendiliğinden yenilenir.
+Kütüphane ve kayıtlar (hot cue, grid, listeler) her tarayıcıda ayrı tutulur; şarkılar bilgisayarından okunur, hiçbir yere yüklenmez.
+
 ## Gerekenler
 - Windows'ta **Node.js 20 veya üstü** (kontrol: `node -v`)
 - **Chrome** ya da **Edge** (ses kartı seçimi, klasör erişimi ve MIDI yalnızca bunlarda tam çalışır)

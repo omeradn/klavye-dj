@@ -14,6 +14,11 @@ Fazların asıl numaraları brief'tekiyle aynı; burada çalışma sırasıyla l
 10. **Ajan DJ** (yeni faz): Claude şarkıları analiz edip vuruşa oturan bir set senaryosu yazar, uygulama canlı çalar, her hamle ekranda görünür; geçişler arasında Claude planı günceller. Canlı yayınlar için (cd.md parçaları)
 11. **Faz 7** Cila ve yayın
 
+## Yayın (2026-11-22)
+- Proje GitHub'da: https://github.com/omeradn/klavye-dj (herkese açık). Canlı site: https://omeradn.github.io/klavye-dj/
+- Her güncellemede GitHub testleri, tip kontrolünü ve iki derlemeyi çalıştırır; hepsi geçerse siteyi yayınlar. Tek dosya sürümü de sitede.
+- Commit'lerde GitHub'ın gizli e-posta adresi kullanılıyor.
+
 ## 0.9.0 — Faz 3b · Ritim FX ve Kanal FX (2026-11-22)
 ### Eklendi
 - **RİTİM FX** çubuğu (deck'lerin altında): tempoya senkron tek efekt ünitesi.
