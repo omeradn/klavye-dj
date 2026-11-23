@@ -17,7 +17,7 @@ import { loadMeta, saveMeta } from '../library/trackmeta';
 import { computePeaks, PPS } from '../analysis/peaks';
 import { computeBands, energyRating } from '../analysis/features';
 import { compat, detectKey, keyName, shiftKey, wheelCode, type Key } from '../analysis/key';
-import { DEMOS, renderDemo } from '../demo/synth';
+import { ALL_DEMOS } from '../demo/demos';
 import type { DeckIn, DeckState } from './worklets/protocol';
 import SignalsmithStretch, { type StretchNode } from 'signalsmith-stretch';
 
@@ -536,17 +536,17 @@ export class Deck {
   async loadDemo(index?: number): Promise<void> {
     const ctx = ensureCtx();
     if (this.playing && !confirm(`Deck ${this.id} şu an çalıyor. Yine de demo yüklensin mi?`)) return;
-    const spec = DEMOS[(index ?? this.demoIdx) % DEMOS.length];
+    const spec = ALL_DEMOS[(index ?? this.demoIdx) % ALL_DEMOS.length];
     if (index == null) this.demoIdx += 2;
     toast(`Deck ${this.id}: demo hazırlanıyor…`);
     await new Promise(r => setTimeout(r, 30)); // let the toast paint
-    const { L, R } = renderDemo(spec, ctx.sampleRate);
+    const { L, R } = spec.render(ctx.sampleRate);
     this.peaks = computePeaks(L, ctx.sampleRate);
     this.bands = computeBands(L, ctx.sampleRate);
-    this.key = { tonic: spec.root % 12, minor: spec.minor };
+    this.key = spec.key;
     this.srcFile = null;
     // demos are made on an exact grid: bar 1 at 0 s, phrases of 8 bars
-    await this.setTrack(spec.name, L, R, ctx.sampleRate, { bpm: spec.bpm, offset: 0, meter: '4/4', phraseBar: 0 }, 'demo:' + spec.name);
+    await this.setTrack(spec.name, L, R, ctx.sampleRate, { bpm: spec.bpm, offset: 0, meter: spec.meter, phraseBar: 0 }, 'demo:' + spec.name);
   }
 
   private async setTrack(name: string, L: Float32Array, R: Float32Array, sr: number, grid: Grid | null, sig: string): Promise<void> {

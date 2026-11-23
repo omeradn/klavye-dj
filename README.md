@@ -2,7 +2,7 @@
 
 Tarayıcıda çalışan, klavye ve mouse ile kontrol edilen DJ uygulaması. Hedef: profesyonel bir DJ yazılımı + DJ'liği adım adım öğreten bir akademi + restoran setleri için özel modlar.
 
-> Durum: **Faz 4b tamam** (🎓 DJ Akademi: ders 1–10, Beatmatch Antrenörü, Geçiş Sınavı, hayalet eller) · **Faz 3 tamam** — pad'ler ve sampler, Ritim FX, Kanal FX, fader eğrileri, isolator, mikrofon + ducking · **Faz 2 tamam** — ses motoru, kulaklık cue, kütüphane (playlist, geçmiş, etiket), beatgrid, gerçek SYNC, quantize, Türk ritimleri, ton tespiti ve Ton Çarkı, 3 renkli dalga formu. Yol haritası için [CHANGELOG.md](CHANGELOG.md).
+> Durum: **Faz 4 tamam** (🎓 DJ Akademi: 14 ders, Beatmatch Antrenörü, Geçiş Sınavı, Kulak Egzersizi, hayalet eller) · **Faz 3 tamam** — pad'ler ve sampler, Ritim FX, Kanal FX, fader eğrileri, isolator, mikrofon + ducking · **Faz 2 tamam** — ses motoru, kulaklık cue, kütüphane (playlist, geçmiş, etiket), beatgrid, gerçek SYNC, quantize, Türk ritimleri, ton tespiti ve Ton Çarkı, 3 renkli dalga formu. Yol haritası için [CHANGELOG.md](CHANGELOG.md).
 
 ## Canlı sürüm
 **https://omeradn.github.io/klavye-dj/** — kurulum gerekmez, Chrome ya da Edge ile açılır.

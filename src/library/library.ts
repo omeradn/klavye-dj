@@ -1,7 +1,7 @@
 import { $, fmt, toast } from '../util';
 import { ensureCtx } from '../engine/context';
 import type { Deck, TrackInfo } from '../engine/deck';
-import { DEMOS } from '../demo/synth';
+import { ALL_DEMOS } from '../demo/demos';
 import { detectBPM } from '../analysis/bpm';
 import { analyzeGrid } from '../analysis/grid';
 import { compat, detectKey, keyName, wheelCode, type Key } from '../analysis/key';
@@ -345,9 +345,9 @@ function render(): void {
 
 export async function setupLibrary(ds: Deck[]): Promise<void> {
   decks = ds;
-  demoTracks = DEMOS.map((s, i) => ({
+  demoTracks = ALL_DEMOS.map((s, i) => ({
     id: 'demo' + i, name: s.name, folder: 'Demo (kodla üretildi)', bpm: s.bpm, demo: i, sig: demoSig(s.name),
-    key: { tonic: s.root % 12, minor: s.minor } as Key,
+    key: s.key as Key | null,
   }));
   decks.forEach(d => { d.onAnalyzed = rememberAnalysis; d.onPlayed = logPlay; });
 

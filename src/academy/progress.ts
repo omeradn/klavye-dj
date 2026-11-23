@@ -10,6 +10,7 @@ export interface Progress {
   badges: string[];
   trainerBest: number;
   examBest: number;
+  earBest: number;
 }
 
 export const BADGES: Record<string, { icon: string; name: string; how: string }> = {
@@ -25,11 +26,14 @@ export const BADGES: Record<string, { icon: string; name: string; how: string }>
   phrase: { icon: '📐', name: 'Phrase Ustası', how: 'Ders 5\'i bitir' },
   mixer: { icon: '🎛️', name: 'Geçiş Ustası', how: 'Ders 6–10\'u bitir' },
   exam80: { icon: '🎓', name: 'Sınavı Geçti', how: 'Geçiş Sınavı\'nda 80+ puan' },
+  ear80: { icon: '🎵', name: 'Keskin Kulak', how: 'Kulak Egzersizi\'nde 80+ puan' },
+  aksak: { icon: '🥁', name: 'Aksak Usta', how: 'Ders 14\'ü (Türk müziği) bitir' },
+  grad: { icon: '🏅', name: 'Akademi Mezunu', how: '14 dersin hepsini bitir' },
 };
 
 const KEY = 'klavye-dj.academy';
 
-export const empty = (): Progress => ({ lessons: {}, xp: 0, streak: { last: '', count: 0, best: 0 }, practiceSecs: 0, badges: [], trainerBest: 0, examBest: 0 });
+export const empty = (): Progress => ({ lessons: {}, xp: 0, streak: { last: '', count: 0, best: 0 }, practiceSecs: 0, badges: [], trainerBest: 0, examBest: 0, earBest: 0 });
 
 export function load(): Progress {
   try {
@@ -72,6 +76,8 @@ export function checkBadges(p: Progress): string[] {
     ['streak3', p.streak.best >= 3], ['streak7', p.streak.best >= 7],
     ['hour', p.practiceSecs >= 3600],
     ['phrase', has('l5')], ['mixer', ['l6', 'l7', 'l8', 'l9', 'l10'].every(has)], ['exam80', p.examBest >= 80],
+    ['ear80', p.earBest >= 80], ['aksak', has('l14')],
+    ['grad', Array.from({ length: 14 }, (_, i) => 'l' + (i + 1)).every(has)],
   ];
   const fresh = want.filter(([id, ok]) => ok && !p.badges.includes(id)).map(([id]) => id);
   p.badges.push(...fresh);

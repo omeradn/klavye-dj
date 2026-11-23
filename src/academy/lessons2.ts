@@ -13,7 +13,7 @@ import { phaseMs, prep } from './lessons';
 const A = (c: Ctx) => c.decks[0], B = (c: Ctx) => c.decks[1];
 
 /** A playing from `aBar`, B parked at its start with SYNC on (tempo follows A); B's fader optionally down. */
-async function prepMix(c: Ctx, a: number, b: number, aBar: number, bDown = true): Promise<void> {
+export async function prepMix(c: Ctx, a: number, b: number, aBar: number, bDown = true): Promise<void> {
   await prep(c, a, b);
   setChanFx('filter');
   const da = A(c), db = B(c);
@@ -24,7 +24,7 @@ async function prepMix(c: Ctx, a: number, b: number, aBar: number, bDown = true)
 }
 
 /** The phrase-start rule for starting a deck: ±1 beat passes; otherwise park it again and explain. */
-function phraseStart(d: Deck, ref: Deck, watch: ReturnType<typeof startWatch>): boolean | string {
+export function phraseStart(d: Deck, ref: Deck, watch: ReturnType<typeof startWatch>): boolean | string {
   const off = watch(d, ref);
   if (off == null) return d.playing;
   if (Math.abs(off) <= 1) return true;
@@ -33,7 +33,7 @@ function phraseStart(d: Deck, ref: Deck, watch: ReturnType<typeof startWatch>): 
     : `${off.toFixed(1)} vuruş geç kaldın. BAR 8/8 sarı yanınca say: 4-3-2-1… ve ilk vuruşta bas.`;
 }
 
-const phraseHint = 'Deck A\'nın sayacına bak: "BAR 8/8" sarı yanınca son bardasın. Işıklar 4-3-2-1 sayar; kırmızı ilk ışık yanarken bas.';
+export const phraseHint = 'Deck A\'nın sayacına bak: "BAR 8/8" sarı yanınca son bardasın. Işıklar 4-3-2-1 sayar; kırmızı ilk ışık yanarken bas.';
 
 let watch = startWatch();
 

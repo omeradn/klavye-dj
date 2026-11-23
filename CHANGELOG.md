@@ -7,12 +7,33 @@ Fazların asıl numaraları brief'tekiyle aynı; burada çalışma sırasıyla l
 3. **Faz 2** Analiz ve kütüphane ✅ — 2a kütüphane · 2b beatgrid + SYNC · 2c ton, renkli dalga formu, listeler
 4. **Faz 3** Mikser, efektler, pad'ler (öne alındı) — 3a pad modları + sampler ✅ · 3b Ritim FX + Kanal FX ✅ · 3c mikser ekstraları ✅ (4 deck Faz 5'e ertelendi)
 5. **Yayın**: GitHub'a yükleme + canlı site (GitHub Pages), her güncellemede testler ve otomatik yayın (3b'den sonra)
-6. **Faz 4** DJ Akademi — 4a altyapı + ders 1–4 + antrenör ✅ · 4b ders 5–10 + Geçiş Sınavı ✅ · 4c ders 11–14 + Kulak Egzersizi — set senaryosu oynatıcı ve **hayalet eller** (kullanılan kontrol parlar, Türkçe açıklama: "önce izle, sonra sen yap") dahil
+6. **Faz 4** DJ Akademi — 4a altyapı + ders 1–4 + antrenör ✅ · 4b ders 5–10 + Geçiş Sınavı ✅ · 4c ders 11–14 + Kulak Egzersizi ✅ — set senaryosu oynatıcı ve **hayalet eller** (kullanılan kontrol parlar, Türkçe açıklama: "önce izle, sonra sen yap") dahil
 7. **Faz 6a** Restoran Modu, set kaydı, canlı koç, geçiş asistanı
 8. **Faz 5** MIDI ve tuş değiştirme
 9. **Faz 6b** Reels çıktısı, hayalet mod, set planlayıcı
 10. **Ajan DJ** (yeni faz): Claude şarkıları analiz edip vuruşa oturan bir set senaryosu yazar, uygulama canlı çalar, her hamle ekranda görünür; geçişler arasında Claude planı günceller. Canlı yayınlar için (cd.md parçaları)
 11. **Faz 7** Cila ve yayın
+
+## 0.13.0 — Faz 4c · Harmonik miks, restoran seti, aksak ritim, Kulak Egzersizi (2026-11-23)
+### Eklendi
+- **Ders 11 · Harmonik miks**: Ton Çarkı ile uyumu okumak; B'nin tonunu ⇧Ü ile 3 yarım ses düşürüp yazıları yeşile getirmek; ✓ Uyumlu ve Ton sıralamasıyla kütüphaneden uyumlu şarkı seçmek.
+- **Ders 12 · Set kurgusu ve enerji eğrisi**: BPM sıralamasıyla ısınma → yükselme → zirve diye bir set kurmak (4 demo ile).
+- **Ders 13 · Restoran seti pratiği**: master'ı kısmak, bası baştan kesmek, phrase başında B'yi açmak ve crossfader'ı **en az 30 saniyede** yavaşça kaydırmak; anons için mikrofonu açıp DUCK'ı denemek. Çok hızlı geçişte uyarır ve crossfader'ı başa alır.
+- **Ders 14 · Türk müziği ile miks (aksak ritimler)**: 9/8 karşılama demosu (darbuka düm/tek, hicaz ezgi, 2+2+2+3) ile ölçü butonunu 9/8 yapmak; aksak şarkıdan 4/4'e echo out ile geçmek. Ders 14 sonunda "Aksak Usta" rozeti.
+- **Kulak Egzersizi** (Akademi → Pratik): 8 soru — hangisi hızlı, hangisi önde, hizalı mı kayık mı, uyumlu mu çatışıyor. Ekrandaki ipuçları (BPM, dalga formu) gizlenir; her yanlış cevapta doğrusu ve nedeni yazılır. En iyi skor saklanır, 80+ "Keskin Kulak" rozeti.
+- **Akademi Mezunu** rozeti: 14 dersin hepsini bitirince.
+- **Kodla üretilmiş 9/8 demo** (`src/demo/aksak.ts`): 270 sekizlik/dk, bar başlarında darbuka düm'leri grid'e tam oturuyor; testlerle doğrulandı.
+- Ders motoruna çoktan seçmeli adım desteği (`choices`, `answer`, `explain`); bazı adımlarda ekran dalga formu gizlenebiliyor (kulak egzersizi).
+
+### Düzeltildi
+- Ders 13'teki uzun geçiş kontrolü yanlış ölçüyordu (iki şarkının birlikte duyulduğu süreyi sayıyordu, 30 saniyeye hiç ulaşılamıyordu). Artık crossfader'ın iki uç arasında geçirdiği süre ölçülüyor.
+
+### Denendi (tarayıcıda, gerçek tuş olaylarıyla)
+- Ders 11: 100/100 (ton düzeltme ve ✓ Uyumlu adımları dahil).
+- Ders 12: 100/100.
+- Ders 13: 40 sn süren crossfader geçişiyle 100/100 (bas da bu sırada değiştirildi). Çok hızlı denemede doğru uyarı çıktı.
+- Ders 14: 9/8 demo yüklendi, sayaç ve ölçü doğru; echo out adımlarına kadar ilerledi.
+- Kulak Egzersizi: 8 soru çalıştı, doğru/yanlış geri bildirimi ve açıklamalar doğru çıktı; sonuç kartı çıktı (ilk seçenekle rastgele cevap verildiği için 63/100).
 
 ## 0.12.0 — Faz 4b · Geçiş dersleri ve Geçiş Sınavı (2026-11-22)
 ### Eklendi

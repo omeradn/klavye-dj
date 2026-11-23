@@ -1,12 +1,13 @@
 /** The "Akademi" menu: lessons (unlocking in order), practice modes, XP, streak, practice time and badges. */
 import { CURRICULUM, LESSONS as L1to4, TRAINER } from './lessons';
 import { EXAM, LESSONS2 } from './lessons2';
+import { EAR, LESSONS3 } from './lessons3';
 
 
 import { initAcademyEngine, inLesson, onSummary, setupCoach, startLesson, type Ctx } from './engine';
 import { BADGES, progress } from './progress';
 
-const LESSONS = [...L1to4, ...LESSONS2];
+const LESSONS = [...L1to4, ...LESSONS2, ...LESSONS3];
 
 const $ = (s: string) => document.querySelector<HTMLElement>(s)!;
 
@@ -35,7 +36,7 @@ function render(): void {
   $('#acPractice').innerHTML = `
     <li class="open" data-p="trainer"><span class="no">🏁</span><span class="tt">Beatmatch Antrenörü<small>${TRAINER.goal}${p.trainerBest ? ` · en iyi: ${p.trainerBest}` : ''}</small></span><em class="go">Başla ▸</em></li>
     <li class="${unlocked(7) ? 'open' : 'locked'}" data-p="exam"><span class="no">🎚️</span><span class="tt">Geçiş Sınavı<small>${EXAM.goal}${p.examBest ? ` · en iyi: ${p.examBest}` : ' · Ders 6\'dan sonra açılır'}</small></span>${unlocked(7) ? '<em class="go">Başla ▸</em>' : '🔒'}</li>
-    <li class="soon"><span class="no">👂</span><span class="tt">Kulak Egzersizi<small>Hangisi hızlı? Hangisi önde? Kısa kulak testleri</small></span><em>yakında</em></li>`;
+    <li class="open" data-p="ear"><span class="no">👂</span><span class="tt">Kulak Egzersizi<small>${EAR.goal}${p.earBest ? ` · en iyi: ${p.earBest}` : ''}</small></span><em class="go">Başla ▸</em></li>`;
   $('#acBadges').innerHTML = Object.entries(BADGES).map(([id, b]) =>
     `<span class="badge ${p.badges.includes(id) ? '' : 'off'}" title="${b.how}">${b.icon} ${b.name}</span>`).join('');
 }
@@ -54,7 +55,7 @@ export function setupAcademy(c: Ctx): void {
   $('#acPractice').onclick = e => {
     const li = (e.target as HTMLElement).closest<HTMLElement>('li[data-p]');
     if (!li || !li.classList.contains('open')) return;
-    toggleAcademy(false); void startLesson(li.dataset.p === 'exam' ? EXAM : TRAINER);
+    toggleAcademy(false); void startLesson(li.dataset.p === 'exam' ? EXAM : li.dataset.p === 'ear' ? EAR : TRAINER);
   };
   onSummary((what, l) => {
     if (what === 'menu' || l.practice) { toggleAcademy(true); return; }

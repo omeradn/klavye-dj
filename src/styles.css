@@ -341,3 +341,8 @@ kbd{background:#000;border:1px solid #444b57;border-bottom-width:2px;border-radi
 .acad-nobpm .dbpm,.acad-nobpm .dinfo .tp,.acad-nobpm .phase,.acad-nobpm #fxBpm,.acad-nobpm .dtitle,.acad-nobpm .dinfo .key{visibility:hidden}
 #summary ul.fb{list-style:none;padding-left:0;max-width:420px}
 #summary ul.fb li{margin:6px 0;font-size:13px}
+.cChoices{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.cChoices .hbtn{flex:1;min-width:120px;font-weight:600;padding:9px}
+.cChoices .hbtn:hover{border-color:var(--amber)}
+.acad-nowave .waves canvas{visibility:hidden}
+.acad-nowave .waves .wcan{background:repeating-linear-gradient(135deg,#14171b 0 10px,#101215 10px 20px)}

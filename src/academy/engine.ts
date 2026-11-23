@@ -28,6 +28,11 @@ export interface Step {
   check?: (c: Ctx, s: StepState) => boolean | string;
   /** the check must stay true this long (ms) */
   hold?: number;
+  /** multiple choice (ear training): answer buttons; `answer` gives the index of the right one */
+  choices?: string[];
+  answer?: (c: Ctx, s: StepState) => number;
+  /** shown after a wrong answer: why the right one is right */
+  explain?: string;
   hint?: string;
   /** ghost-hand demo ("Göster") */
   show?: (c: Ctx) => GhostStep[];
@@ -94,7 +99,8 @@ function render(msg?: string, cls = ''): void {
   $('#coachMsg').className = cls;
   $('#coachHint').style.display = s.hint ? '' : 'none';
   $('#coachShow').style.display = s.show ? '' : 'none';
-  $('#coachNext').style.display = s.check ? 'none' : '';
+  $('#coachNext').style.display = s.check || s.choices ? 'none' : '';
+  $('#coachChoices').innerHTML = s.choices && !passed ? s.choices.map((x, i) => `<button class="hbtn" data-c="${i}">${x}</button>`).join('') : '';
   $('#coachNext').textContent = idx === n - 1 && !s.check ? 'Bitir' : 'Devam';
   $('#coachScore').textContent = maxPts ? `${earned} puan` : '';
 }
@@ -104,7 +110,7 @@ function enterStep(i: number): void {
   st = { t0: performance.now(), d: {} };
   const s = lesson!.steps[i];
   s.enter?.(ctx, st);
-  if (s.check) maxPts += 10;
+  if (s.check || s.choices) maxPts += 10;
   render();
   spotlight();
 }
@@ -143,7 +149,7 @@ export async function startLesson(l: Lesson): Promise<void> {
   $('#coach').style.display = 'block';
   $('#coachText').textContent = 'Hazırlanıyor… (demo parçalar yükleniyor)';
   $('#coachTitle').textContent = `${l.practice ? '' : 'Ders ' + l.no + ' · '}${l.title}`;
-  for (const id of ['#coachDots', '#coachKeys', '#coachMsg', '#coachScore']) $(id).innerHTML = '';
+  for (const id of ['#coachDots', '#coachKeys', '#coachMsg', '#coachScore', '#coachChoices']) $(id).innerHTML = '';
   for (const id of ['#coachShow', '#coachHint', '#coachNext']) $(id).style.display = 'none';
   await l.setup?.(ctx);
   if (lesson !== l) return;
@@ -162,7 +168,7 @@ export function stopLesson(ask = true): void {
   stopGhost();
   lesson.teardown?.(ctx);
   progress.practiceSecs += practiceSecs(); save();
-  setRules({ noSync: false, hideBpm: false });
+  setRules({ noSync: false, hideBpm: false, hideWaves: false });
   lesson = null;
   document.body.classList.remove('in-lesson');
   $('#coach').style.display = 'none';
@@ -176,6 +182,7 @@ async function finish(): Promise<void> {
   const score = Math.max(0, Math.min(100, Math.round(l.score ? l.score(ctx, secs, base) : base)));
   if (l.id === 'trainer') progress.trainerBest = Math.max(progress.trainerBest, score);
   if (l.id === 'exam') progress.examBest = Math.max(progress.examBest, score);
+  if (l.id === 'ear') progress.earBest = Math.max(progress.earBest, score);
   const r = finishLesson(progress, l.id, score, secs);
   stopLesson(false);
   save();
@@ -203,7 +210,21 @@ let summaryNext: ((what: 'menu' | 'next', l: Lesson) => void) | undefined;
 export function onSummary(fn: typeof summaryNext): void { summaryNext = fn; }
 
 /** Coach card buttons. */
+function choose(i: number): void {
+  const s = lesson?.steps[idx];
+  if (!s?.choices || passed || demo) return;
+  passed = true;
+  const right = s.answer?.(ctx, st) ?? 0;
+  if (i === right) { earned += stepPts; render(`✓ Doğru! +${stepPts}`, 'ok'); }
+  else render(`✗ Doğrusu: <b>${s.choices[right]}</b>${s.explain ? ' — ' + s.explain : ''}`, 'hint');
+  setTimeout(next, i === right ? 1100 : 2600);
+}
+
 export function setupCoach(): void {
+  $('#coachChoices').onclick = e => {
+    const b = (e.target as HTMLElement).closest<HTMLElement>('[data-c]');
+    if (b) choose(+b.dataset.c!);
+  };
   $('#coachNext').onclick = () => next();
   $('#coachSkip').onclick = () => { if (lesson) { stepPts = 0; render('Adım atlandı', 'wait'); setTimeout(next, 500); } };
   $('#coachExit').onclick = () => stopLesson();

@@ -145,6 +145,7 @@
   <div class="cText" id="coachText"></div>
   <div class="cKeys" id="coachKeys"></div>
   <div id="coachMsg"></div>
+  <div class="cChoices" id="coachChoices"></div>
   <div class="cBtns">
     <button class="hbtn" id="coachShow" title="Hayalet el önce gösterir, sonra sen yaparsın (−2 puan)">🖐 Göster</button>
     <button class="hbtn" id="coachHint" title="İpucu (−3 puan)">💡 İpucu</button>
