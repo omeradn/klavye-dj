@@ -2,7 +2,7 @@
 
 Tarayıcıda çalışan, klavye ve mouse ile kontrol edilen DJ uygulaması. Hedef: profesyonel bir DJ yazılımı + DJ'liği adım adım öğreten bir akademi + restoran setleri için özel modlar.
 
-> Durum: **Faz 4 tamam** (🎓 DJ Akademi: 14 ders, Beatmatch Antrenörü, Geçiş Sınavı, Kulak Egzersizi, hayalet eller) · **Faz 3 tamam** — pad'ler ve sampler, Ritim FX, Kanal FX, fader eğrileri, isolator, mikrofon + ducking · **Faz 2 tamam** — ses motoru, kulaklık cue, kütüphane (playlist, geçmiş, etiket), beatgrid, gerçek SYNC, quantize, Türk ritimleri, ton tespiti ve Ton Çarkı, 3 renkli dalga formu. Yol haritası için [CHANGELOG.md](CHANGELOG.md).
+> Durum: **Faz 5a tamam** (🎛️ Kontrol: MIDI Learn, tuş haritası, JSON) · **Faz 4 tamam** (🎓 DJ Akademi: 14 ders, Beatmatch Antrenörü, Geçiş Sınavı, Kulak Egzersizi, hayalet eller) · **Faz 3 tamam** — pad'ler ve sampler, Ritim FX, Kanal FX, fader eğrileri, isolator, mikrofon + ducking · **Faz 2 tamam** — ses motoru, kulaklık cue, kütüphane (playlist, geçmiş, etiket), beatgrid, gerçek SYNC, quantize, Türk ritimleri, ton tespiti ve Ton Çarkı, 3 renkli dalga formu. Yol haritası için [CHANGELOG.md](CHANGELOG.md).
 
 ## Canlı sürüm
 **https://omeradn.github.io/klavye-dj/** — kurulum gerekmez, Chrome ya da Edge ile açılır.
@@ -117,6 +117,12 @@ Her deck'te 8 pad var; ne yapacaklarını üstteki mod belirler (**5** / **6** i
 - Her şarkının tonu bulunur ve 1–12 arası bir numarayla gösterilir (ör. `Am · 1m`). Aynı numara ya da bir komşu numara (aynı harfle) = rahat karışır.
 - Deck'teki ton yazısı yeşilse diğer deck'le uyumlu, sarıysa riskli, kırmızıysa çatışır. TON ♯/♭ ile tonu kaydırarak uyumlu hale getirebilirsin.
 - Kütüphanede **✓ Uyumlu**: çalan şarkıdan sonra tonu ve temposu uyan şarkıları gösterir.
+
+## Kontrol (MIDI ve tuşlar)
+- Üst çubukta **🎛️ Kontrol**. **MIDI** sekmesinde "MIDI'yi aç", sonra MIDI Learn: kontrolü seç → **Öğren** → kontrolcüde knob'u çevir ya da düğmeye bas.
+- **TUŞLAR** sekmesinde bir hücreye tıkla, yeni tuşa bas. Çakışırsa sorulur.
+- Ayarları dosya olarak dışa aktarıp yapıştırarak başka bir bilgisayarda yükleyebilirsin.
+- Shift + tekerlek: ince ayar.
 
 ## Kulaklık
 - Her kanaldaki **🎧 CUE** o kanalı kulaklığa gönderir (fader'dan önce, yani kanal kapalıyken de duyulur).

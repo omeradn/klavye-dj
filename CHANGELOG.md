@@ -9,10 +9,37 @@ Fazların asıl numaraları brief'tekiyle aynı; burada çalışma sırasıyla l
 5. **Yayın**: GitHub'a yükleme + canlı site (GitHub Pages), her güncellemede testler ve otomatik yayın (3b'den sonra)
 6. **Faz 4** DJ Akademi — 4a altyapı + ders 1–4 + antrenör ✅ · 4b ders 5–10 + Geçiş Sınavı ✅ · 4c ders 11–14 + Kulak Egzersizi ✅ — set senaryosu oynatıcı ve **hayalet eller** (kullanılan kontrol parlar, Türkçe açıklama: "önce izle, sonra sen yap") dahil
 7. **Faz 6a** Restoran Modu, set kaydı, canlı koç, geçiş asistanı
-8. **Faz 5** MIDI ve tuş değiştirme
+8. **Faz 5** MIDI ve tuş değiştirme — 5a MIDI Learn + tuş haritası ✅ · 5b gamepad, jog/LED, 4 deck (ertelendi)
 9. **Faz 6b** Reels çıktısı, hayalet mod, set planlayıcı
 10. **Ajan DJ** (yeni faz): Claude şarkıları analiz edip vuruşa oturan bir set senaryosu yazar, uygulama canlı çalar, her hamle ekranda görünür; geçişler arasında Claude planı günceller. Canlı yayınlar için (cd.md parçaları)
 11. **Faz 7** Cila ve yayın
+
+## 0.14.0 — Faz 5a · MIDI Learn ve tuş haritası (2026-11-24)
+### Eklendi
+- **🎛️ Kontrol** penceresi (üst çubuk): iki sekme.
+  - **MIDI**: "MIDI'yi aç" ile kontrolcüyü bağlarsın. **MIDI Learn** üç adım: (1) listeden kontrolü seç (ör. "Tempo · Deck A", "Crossfader", "LOW · Deck B" ya da bir düğme), (2) **Öğren**'e bas, (3) kontrolcüde knob'u çevir ya da düğmeye bas. Bağlantılar listelenir, × ile kaldırılır. "Son gelen" satırı kontrolcüden gelen her mesajı gösterir.
+  - **TUŞLAR**: bir hücreye tıkla, yeni tuşa bas (Esc iptal, Delete kaldırır). Aynı tuş başka bir kontrolde varsa onay sorulur ve o kontrolün tuşu kalkar. Etiketler **Türkçe Q** ya da **US** olabilir. Varsayılana dönüş var.
+- **Dosya olarak sakla / yükle**: MIDI bağlantıları ve tuş haritası JSON metni olarak dışa aktarılır, yapıştırılarak yüklenir.
+- Düğmeler tuşla birebir aynı çalışır (basılı tutan düğmeler — bend, cue, censor, pad — basılı kaldığı sürece çalışır).
+- Kaydırıcılar ve knob'lar: tempo, kanal fader, filtre, LOW/MID/HI/TRIM (her deck), crossfader, master, kulaklık seviyesi, Ritim FX seviyesi.
+- **Tekerlek ince ayarı**: Shift basılıyken tekerlek (knob, fader, deck tempo) beş kat hassas çalışır.
+- Tuş rozetleri ve yardım tablosu yeni tuşları gösterir. Ayarlar tarayıcıda saklanır.
+- Testler: MIDI ayrıştırma, öğrenme kuralları, tuş çakışmaları, JSON (toplam 92 test).
+
+### Düzeltildi
+- Tuş haritası iki deck için tek ortak tablo; çakışma kontrolü artık iki deck'e birden bakıyor. (Test sırasında bulundu: A'ya atanan P, B'nin "Loop ×2" tuşunun üstüne sessizce yazıyordu.)
+- Pad'ler ile diğer "pad…" adlı eylemler (padModeNext) karışmıyor.
+
+### Denendi (tarayıcıda; gerçek MIDI cihazı yok, mesajlar elle verildi)
+- MIDI Learn: kontrol seçildi, Öğren'e basıldı, CC 7 tempo'ya bağlandı; 127 → +0,16, 64 → 0,001, 0 → −0,16.
+- Düğme: nota 36 basışı A'yı çaldı, bırakma bir şey yapmadı, ikinci basış durdurdu.
+- Basılı tut: nota 37 bend'i +0,04 yaptı, bırakınca 0'a döndü.
+- Tuş: A'nın Q'su P'ye atandı; P, B'deki "Loop ×2"den alındı (onay soruldu); Q artık çalmıyor, P çalıyor. Sıfırlama çalıştı.
+
+### Ertelendi / yapılmadı
+- **4 deck** (Faz 5b): ekran, mikser ve klavye iki deck'e göre kurulu; ayrı bir büyük iş.
+- **Gamepad**, **jog için MIDI**, **MIDI LED geri bildirimi**, **tablet düzeni**, **F klavye şablonu** (sadece Türkçe Q ve US etiketleri var).
+- Gerçek MIDI cihazıyla denenmedi; kontrolcü modelini söylersen onun için hazır bağlantı listesi hazırlanabilir.
 
 ## 0.13.0 — Faz 4c · Harmonik miks, restoran seti, aksak ritim, Kulak Egzersizi (2026-11-23)
 ### Eklendi
