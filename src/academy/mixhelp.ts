@@ -18,7 +18,8 @@ export const barTime = (g: Grid, bar: number): number => g.offset + bar * barPul
 export function audible(d: Deck, xfVal: number): number {
   if (!d.playing || !d.has) return 0;
   const x = xfGains(mixerCfg.xf, (xfVal + 1) / 2);
-  return chGain(mixerCfg.ch, d.chF.v) * (d.i === 0 ? x.a : x.b);
+  const side = d.xfSide === 'L' ? x.a : d.xfSide === 'R' ? x.b : 1;
+  return chGain(mixerCfg.ch, d.chF.v) * side;
 }
 
 /** Is the deck's bass (low band) on? */

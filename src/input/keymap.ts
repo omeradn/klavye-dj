@@ -48,8 +48,10 @@ export interface Overrides { keys: Record<string, string>; layout: 'tr' | 'us' }
 
 export const bindId = (a: string, sh: number, d: number): string => `${a}|${sh}|${d}`;
 
+/** Decks 0–3 = A–D. C and D have no keys by default: assign them in the Kontrol window. */
+export const DECKS = 4;
 const ALL_IDS = new Set<string>();
-for (const r of BIND) { ALL_IDS.add(bindId(r[0], r[3], 0)); ALL_IDS.add(bindId(r[0], r[3], 1)); }
+for (const r of BIND) for (let d = 0; d < DECKS; d++) ALL_IDS.add(bindId(r[0], r[3], d));
 
 /** Keys held by the user: id -> code ('' = unbound). */
 export const EMPTY: Overrides = { keys: {}, layout: 'tr' };
@@ -69,14 +71,15 @@ export function sanitize(o: unknown): Overrides {
 /** The code a slot uses now (user's choice, or the default). */
 export function codeOf(row: Bind, d: number, ov: Overrides = EMPTY): string {
   const id = bindId(row[0], row[3], d);
-  return id in ov.keys ? ov.keys[id] : (d ? row[2] : row[1]);
+  if (id in ov.keys) return ov.keys[id];
+  return d === 0 ? row[1] : d === 1 ? row[2] : '';
 }
 
 /** Every bindable control with its current key. */
 export function slots(ov: Overrides = EMPTY): Slot[] {
   const out: Slot[] = [];
   for (const r of BIND) {
-    for (const d of [0, 1]) {
+    for (let d = 0; d < DECKS; d++) {
       const pad = /^pad\d$/.test(r[0]);
       out.push({
         id: bindId(r[0], r[3], d), d, sh: r[3], a: r[0], label: r[4], mode: r[5],

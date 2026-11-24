@@ -133,6 +133,18 @@ kbd{background:#000;border:1px solid #444b57;border-bottom-width:2px;border-radi
 .ksv{background:#0f1114;border:1px solid #353a44;border-radius:6px;color:var(--mut);font:700 13px ui-monospace,monospace;width:40px;padding:3px 0;cursor:pointer}
 .ksv.on{color:var(--violet);border-color:var(--violet)}
 @media(max-width:1100px){.console{grid-template-columns:1fr}}
+/* 4 deck (Faz 5b): C and D appear under A and B */
+.console2{display:none;grid-template-columns:1fr 330px 1fr;gap:12px;padding:0 16px 16px;max-width:1500px;margin:0 auto}
+.wrow.four{display:none}
+body.four .console2{display:grid}
+body.four .wrow.four{display:grid}
+body.four .lc,body.four .ld4{display:inline-block}
+.lc,.ld4{display:none}
+.deck.C .dname{background:var(--c)} .deck.D .dname{background:var(--d)}
+:root{--c:#3ce37a;--d:#b98bff}
+.side{min-width:44px;font-size:10px}
+#fourBtn.on{border-color:var(--green);color:var(--green)}
+
 
 /* headphones (Faz 1c) */
 .b.pfl.on{border-color:var(--amber);color:var(--amber);box-shadow:0 0 10px #ffb02044}
@@ -371,3 +383,12 @@ kbd{background:#000;border:1px solid #444b57;border-bottom-width:2px;border-radi
 @keyframes kcblink{50%{opacity:.4}}
 .kc kbd{font-size:12px}
 #control code{background:#0f1114;border-radius:4px;padding:1px 6px;font-size:12px}
+
+/* RESTORAN kartı (Faz 6a) */
+.fxu.rest{grid-column:1/-1;flex-wrap:wrap}
+.fxu.rest .rst{font-size:12px;color:var(--mut);flex:1;min-width:200px}
+#restOn.on{border-color:var(--green);color:var(--green)}
+#restLock.on{border-color:var(--amber);color:var(--amber)}
+#restQuiet.on{background:#3a1414;border-color:var(--red);color:var(--red)}
+#restCapK .knob{width:34px;height:34px}
+#restCapK .knob i{height:9px;transform-origin:50% 13px}

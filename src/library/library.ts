@@ -327,7 +327,7 @@ function render(): void {
       <td class="num en">${t.energy ? `<i style="width:${t.energy * 10}%"></i><span>${t.energy}</span>` : ''}</td>
       <td class="num">${t.dur ? fmt(t.dur) : ''}</td>
       <td class="tg" title="Etiketleri düzenlemek için tıkla">${(t.tags ?? []).map(x => `<span>${esc(x)}</span>`).join('') || '<em>+</em>'}</td>
-      <td class="ld">${canLoad ? '<button class="la" data-to="0">A</button><button class="lb" data-to="1">B</button>' : ''}${inPl ? '<button class="rm" data-out="1" title="Listeden çıkar">×</button>' : ''}</td>
+      <td class="ld">${canLoad ? '<button class="la" data-to="0">A</button><button class="lb" data-to="1">B</button><button class="lc" data-to="2">C</button><button class="ld4" data-to="3">D</button>' : ''}${inPl ? '<button class="rm" data-out="1" title="Listeden çıkar">×</button>' : ''}</td>
     </tr>`;
   }).join('');
   const empty = view === 'history' ? 'Henüz çalınan şarkı yok'
@@ -457,3 +457,16 @@ export async function setupLibrary(ds: Deck[]): Promise<void> {
   render();
   void analyzeAll();
 }
+
+/**
+ * Songs the Restoran Modu automix may play: the "Restoran" playlist when it exists,
+ * otherwise every analysed song (demos included).
+ */
+export function poolTracks(): Track[] {
+  const pl = playlists.find(p => p.name === 'Restoran');
+  if (pl) return pl.items.map(i => bySig(i.sig)).filter((t): t is Track => !!t && t.bpm != null);
+  return allTracks().filter(t => t.bpm != null && (t.demo != null || t.handle || t.file));
+}
+
+/** Load a song onto a deck (the same path as the A / B buttons). */
+export const loadTrackTo = (t: Track, d: Deck): Promise<void> => loadTo(t, d);

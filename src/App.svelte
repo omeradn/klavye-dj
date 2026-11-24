@@ -17,6 +17,7 @@
   <button class="hbtn" id="ctrlBtn" title="MIDI kontrolcü bağla (Learn) ve tuşları değiştir">🎛️ Kontrol</button>
   <button class="hbtn acad" id="acadBtn" title="Adım adım DJ dersleri (F4)">🎓 Akademi <kbd>F4</kbd></button>
   <button class="hbtn" id="setBtn">Ses ayarları <kbd>F2</kbd></button>
+  <button class="hbtn" id="fourBtn" title="Dört deck: C ve D'yi aç (alt sıra)">4 DECK</button>
   <button class="hbtn" id="keysBtn">Tuş etiketleri</button>
   <button class="hbtn" id="helpBtn">Kısayollar <kbd>Esc</kbd></button>
 </header>
@@ -27,6 +28,8 @@
     <span class="plab">FAZ</span><div class="pm"><b></b><i id="phI"></i></div><span id="phT">—</span>
   </div>
   <div class="wrow"><div class="wlab" style="color:var(--b)">B</div><div class="wcan"><canvas class="scroll" id="wsB"></canvas><canvas class="ov" id="woB"></canvas></div></div>
+  <div class="wrow four"><div class="wlab" style="color:var(--c)">C</div><div class="wcan"><canvas class="scroll" id="wsC"></canvas><canvas class="ov" id="woC"></canvas></div></div>
+  <div class="wrow four"><div class="wlab" style="color:var(--d)">D</div><div class="wcan"><canvas class="scroll" id="wsD"></canvas><canvas class="ov" id="woD"></canvas></div></div>
 </div>
 
 <div class="console">
@@ -49,6 +52,18 @@
     </div>
   </section>
   <section class="deck B" id="deckB"></section>
+</div>
+<div class="console console2">
+  <section class="deck C" id="deckC"></section>
+  <section class="mixer m2">
+    <div class="chs">
+      <div class="ch" id="chC"></div>
+      <div class="ctr"><div class="vus"><div class="vu"><i id="vuC"></i></div><div class="vu"><i id="vuD"></i></div></div></div>
+      <div class="ch" id="chD"></div>
+    </div>
+    <div class="xfw"><span class="note">Crossfader tarafı: her kanalın ◀ / ▶ / ● düğmesi</span></div>
+  </section>
+  <section class="deck D" id="deckD"></section>
 </div>
 
 <section class="fxbar">
@@ -73,6 +88,14 @@
     <span class="fxn" id="cfxName">FİLTRE</span>
     <button class="b sm" id="cfxNext" title="Sonraki (↑)">▶</button>
     <span class="note">Kanallardaki düğme (⇧D / ⇧F, ⇧G ortala)</span>
+  </div>
+  <div class="fxu rest">
+    <b>🍽️ RESTORAN</b>
+    <button class="b sm" id="restOn" title="Otomatik çalma: şarkılar phrase başında, 32 ölçü geçişle sırayla gelir">OTOMATİK</button>
+    <button class="b sm" id="restLock" title="Kilit: çalan şarkı yanlışlıkla durdurulamaz">KİLİT</button>
+    <button class="b sm red" id="restQuiet" title="Acil kıs: sesi hemen çok düşürür; tekrar basınca eski seviyeye döner">ACİL KIS</button>
+    <div id="restCapK"></div>
+    <span class="rst" id="restStatus">Kapalı</span>
   </div>
   <div class="fxu">
     <b>MİKSER</b>

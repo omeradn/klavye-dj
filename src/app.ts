@@ -14,7 +14,10 @@ import { buildSampler, sampler, setSamplerLevel } from './engine/sampler';
 import { buildFxPoints } from './engine/beatfx';
 import { setupAcademy, toggleAcademy } from './academy/panel';
 import { setupControl, toggleControl, controlOpen } from './ui/control';
-import { registerCont, parseMidi, handleMidi, midiCfg } from './midi/midi';
+import { registerCont, parseMidi, handleMidi, midiCfg, startControllers, startGamepads, startLearn, setLedOutputs } from './midi/midi';
+import { setupRestaurant, masterLimit } from './restaurant/automix';
+import { setupRestaurantPanel } from './ui/restaurant';
+import { loadTrackTo, poolTracks } from './library/library';
 import { ritimFx } from './engine/beatfx';
 import { inLesson, stopLesson } from './academy/engine';
 import { chanFxNext, fxBeats, fxFrame, fxLevel, fxNext, fxTarget, fxToggle, mixerFrame, setupFxBar, setupMixerBar, wireFx } from './ui/fxbar';
@@ -28,13 +31,21 @@ export function initApp(): void {
 
   const masterK = new Knob($('#masterK'), {
     min: 0, max: 1, def: 0.85,
-    onchange: v => { if (engine.master) ramp(engine.master.gain, v); },
+    onchange: v => { if (engine.master) ramp(engine.master.gain, masterLimit(v)); },
   });
   $('#masterK').dataset.a = 'master';
 
-  const decks = [new Deck('A', 0), new Deck('B', 1)];
+  const decks = [new Deck('A', 0), new Deck('B', 1), new Deck('C', 2), new Deck('D', 3)];
   decks[0].other = decks[1];
   decks[1].other = decks[0];
+  decks[2].other = decks[3];
+  decks[3].other = decks[2];
+  $('#fourBtn').onclick = () => {
+    const on = !document.body.classList.contains('four');
+    document.body.classList.toggle('four', on);
+    $('#fourBtn').classList.toggle('on', on);
+    setTimeout(() => window.dispatchEvent(new Event('resize')), 0);   // canvases need their size again
+  };
 
   const mixer = new Mixer(decks);
   const xf = new Fader($('#xf'), { vertical: false, min: -1, max: 1, def: 0, onchange: v => mixer.setXF(v) });
@@ -54,7 +65,7 @@ export function initApp(): void {
   onCtxCreated(() => buildFxPoints());
   new Knob($('#sampK'), { min: 0, max: 1, def: sampler.level, onchange: setSamplerLevel });
   onCtxCreated(async () => {
-    engine.master!.gain.value = masterK.v;
+    engine.master!.gain.value = masterLimit(masterK.v);
     await Promise.all(decks.map(d => d.wire()));
     mixer.apply();
     wireFx();
@@ -121,15 +132,20 @@ export function initApp(): void {
   });
 
   // dev-only handle for debugging in the browser console (not in production builds)
-  if (import.meta.env.DEV) (window as unknown as Record<string, unknown>).kdj = { decks, engine, mixer, out: outputNodes, midi: { parseMidi, handleMidi, midiCfg } };
+  if (import.meta.env.DEV) (window as unknown as Record<string, unknown>).kdj = { decks, engine, mixer, out: outputNodes, midi: { parseMidi, handleMidi, midiCfg, startLearn, setLedOutputs } };
 
   setupFxBar(decks);
   setupMixerBar();
   setupAcademy({ decks, mixer, xf });
   setupControl(decks);
+  setupRestaurant({
+    decks, xfVal: () => mixer.xfVal, setXf: v => xf.set(v), pool: poolTracks, load: loadTrackTo,
+    applyMaster: () => { if (engine.master) ramp(engine.master.gain, masterLimit(masterK.v)); },
+  });
+  setupRestaurantPanel();
   // everything a MIDI knob or fader can move (keys and buttons are learned through the key map)
   decks.forEach((d, i) => {
-    const L = i ? 'B' : 'A', C = (id: string, label: string, min: number, max: number, set: (v: number) => void) =>
+    const L = 'ABCD'[i], C = (id: string, label: string, min: number, max: number, set: (v: number) => void) =>
       registerCont({ id: `${id}:${i}`, label: `${label} · Deck ${L}`, min, max, set });
     C('tempo', 'Tempo', -0.16, 0.16, v => d.tempoF.set(v));
     C('chf', 'Kanal fader', 0, 1, v => d.chF.set(v));
@@ -143,6 +159,10 @@ export function initApp(): void {
   registerCont({ id: 'master', label: 'Master ses', min: 0, max: 1, set: v => masterK.set(v) });
   registerCont({ id: 'phones', label: 'Kulaklık seviyesi', min: 0, max: 1, set: v => phLevelK.set(v) });
   registerCont({ id: 'fxlevel', label: 'Ritim FX seviyesi', min: 0, max: 1, set: v => ritimFx.setLevel(v) });
+  // jog wheels: relative steps (a controller's jog sends 1–63 right, 65–127 left)
+  decks.forEach((d, i) => registerCont({ id: `jog:${i}`, label: `Jog (tekerlek) · Deck ${'ABCD'[i]}`, rel: s => d.jog(s) }));
+  startControllers(decks);
+  startGamepads();
   setupBadges(decks);
   setupSettings();
   void setupLibrary(decks);

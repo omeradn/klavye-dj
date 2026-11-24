@@ -9,10 +9,48 @@ Fazların asıl numaraları brief'tekiyle aynı; burada çalışma sırasıyla l
 5. **Yayın**: GitHub'a yükleme + canlı site (GitHub Pages), her güncellemede testler ve otomatik yayın (3b'den sonra)
 6. **Faz 4** DJ Akademi — 4a altyapı + ders 1–4 + antrenör ✅ · 4b ders 5–10 + Geçiş Sınavı ✅ · 4c ders 11–14 + Kulak Egzersizi ✅ — set senaryosu oynatıcı ve **hayalet eller** (kullanılan kontrol parlar, Türkçe açıklama: "önce izle, sonra sen yap") dahil
 7. **Faz 6a** Restoran Modu, set kaydı, canlı koç, geçiş asistanı
-8. **Faz 5** MIDI ve tuş değiştirme — 5a MIDI Learn + tuş haritası ✅ · 5b gamepad, jog/LED, 4 deck (ertelendi)
+5. **Faz 5** MIDI ve tuş değiştirme — 5a MIDI Learn + tuş haritası ✅ · 5b 4 deck, jog, gamepad, LED ✅ (tablet düzeni ertelendi)
+6. **Faz 6a** Restoran Modu ✅ (kalan 6b: reels, set kaydı, set planlayıcı, canlı koç)
 9. **Faz 6b** Reels çıktısı, hayalet mod, set planlayıcı
 10. **Ajan DJ** (yeni faz): Claude şarkıları analiz edip vuruşa oturan bir set senaryosu yazar, uygulama canlı çalar, her hamle ekranda görünür; geçişler arasında Claude planı günceller. Canlı yayınlar için (cd.md parçaları)
 11. **Faz 7** Cila ve yayın
+
+## 0.15.0 — Faz 6a Restoran Modu · Faz 5b 4 deck, jog, gamepad, LED (2026-11-24)
+### Eklendi · Restoran Modu (Faz 6a)
+- **🍽️ RESTORAN** kartı (deck'lerin altında):
+  - **OTOMATİK**: şarkılar sırayla, kendi kendine çalar. Çalan şarkı bitmeye yaklaşınca sıradaki şarkı diğer deck'e yüklenir, temposu eşitlenir, **phrase başında** başlar ve **32 ölçülük** yumuşak bir crossfader geçişiyle gelir; geçişin ortasında bas el değiştirir.
+  - **KİLİT**: çalan şarkı yanlışlıkla durdurulamaz (klavye, fare ve MIDI).
+  - **ACİL KIS**: sesi hemen çok düşürür; tekrar basınca eski seviye.
+  - **TAVAN**: master sesinin üst sınırı. Otomatik tavan gün dilimine göre de devreye girer.
+- **Gün dilimleri** (İstanbul saati): öğle sakin (11–15), öğleden sonra (15–18), akşam hareketli (18–23), kapanış (23–11). Her dilim kendi enerji aralığını ve ses tavanını kullanır.
+- **Sıradaki şarkı seçimi**: ton uyumlu (aynı, komşu ya da relatif), tempo ±%6 (yarım/çift tempo dahil), enerji dilimin aralığında ve hedefe yakın; aynı şarkı tekrar çalmaz.
+- Şarkı havuzu: kütüphanede **"Restoran"** adında bir liste varsa yalnızca onun şarkıları; yoksa analiz edilmiş tüm şarkılar (demolar dahil).
+- Durum satırı: gün dilimi, sıradaki şarkı ve geçişin durumu.
+
+### Eklendi · 4 deck ve kontrolcüler (Faz 5b)
+- **4 DECK** düğmesi: C ve D deck'leri alt sırada açılır (kendi dalga formu, kanalı, VU ölçeri).
+- **Crossfader tarafı**: her kanalda ◀ (sol) / ▶ (sağ) / ● (her zaman açık) düğmesi. Varsayılan: A ve C sol, B ve D sağ.
+- Kütüphanede C ve D için yükleme düğmeleri (4 deck açıkken).
+- **Tuşlar C ve D için**: varsayılan olarak boş; 🎛️ Kontrol → TUŞLAR tablosunda C ve D sütunlarına kendi tuşlarını ata (bir tuş tek bir işe ait olur; çakışma sorulur).
+- **Jog tekerleği (MIDI)**: göreli (relative) jog bağlanabilir. Çalarken hızı, dururken sarmayı oynatır.
+- **Gamepad**: analog çubuklar ve düğmeler de MIDI Learn ile bağlanır (ör. sol çubuk = crossfader). Ölü bölge (dead zone) var.
+- **LED geri bildirimi**: bağlı bir düğme yandığında (çalıyor, SYNC, KEY, LOOP, VINYL, SLIP, REV, CENSOR, ECHO, kulaklık CUE, QUANT, dolu hot cue) kontrolcüye ışık komutu gönderilir.
+- Shift + tekerlek ince ayarı, deck tempo tekerleği dahil.
+
+### Denendi (tarayıcıda)
+- Restoran: 2 deck ile tam bir otomatik geçiş (A → B): sıradaki şarkı (Demo 4) seçildi, B'ye yüklendi, phrase başında başladı, crossfader 0'dan 1'e 63 saniyede kaydı, A durdu. Dört deck açıkken aynı geçiş tekrar denendi. Kilit ve acil kıs (0,85 → 0,15 → 0,85) çalıştı.
+- 4 deck: C deck'e atanan tuş (Numpad5) C'yi çalıştırdı; tuş tablosunda 5 sütun.
+- Jog (MIDI): duruyorken 5 adım = 0,10 sn sarma; çalarken +4 adım = %4,8 hız artışı.
+- Pad ekseni (gamepad taklidi): crossfader −1 / 0 / +1 aralığında doğru konumlandı.
+- LED: basınca `144,36,127`, bırakınca `144,36,0` gönderildi.
+- 100 otomatik test geçiyor (6 yeni restoran testi dahil).
+
+### Yapılmadı / bilinen
+- **Tablet düzeni** (küçük ekranda ayrı yerleşim): ertelendi.
+- **Gerçek donanımla deneme**: gamepad, jog ve LED kodla ve sahte mesajlarla denendi; gerçek bir kontrolcüyle henüz test edilmedi.
+- **Ritim FX hedefi**: A, B ya da MASTER (C ve D henüz hedef değil).
+- **SYNC** yalnızca A-B ve C-D çiftleri arasında.
+- Restoran geçişi, havuzda uygun şarkı yoksa durur ve durum satırında nedenini yazar.
 
 ## 0.14.0 — Faz 5a · MIDI Learn ve tuş haritası (2026-11-24)
 ### Eklendi

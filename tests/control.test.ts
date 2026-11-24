@@ -49,7 +49,7 @@ describe('MIDI binding rules', () => {
 describe('key map', () => {
   it('has the same controls as before: deck A and B for every row, pads included', () => {
     const all = slots();
-    expect(all.length).toBe(BIND.length * 2);
+    expect(all.length).toBe(BIND.length * 4);
     expect(codeOf(BIND.find(r => r[0] === 'play')!, 0)).toBe('KeyQ');
     expect(codeOf(BIND.find(r => r[0] === 'play')!, 1)).toBe('KeyY');
     expect(all.find(s => s.id === bindId('pad4', 1, 0))!.code).toBe('Digit1');
@@ -97,5 +97,25 @@ describe('key map', () => {
     const r: Overrides = resetKeys({ keys: { [bindId('play', 0, 0)]: 'KeyP' }, layout: 'us' });
     expect(r).toEqual({ keys: {}, layout: 'us' });
     expect(codeOf(BIND.find(x => x[0] === 'play')!, 0, r)).toBe('KeyQ');
+  });
+});
+
+import { relDelta, normalized as norm2, isOn as isOn2, msgKey as key2 } from '../src/midi/midi';
+
+describe('jog wheels and pads', () => {
+  it('jog: 1–63 is right, 65–127 is left (relative steps)', () => {
+    expect(relDelta(1)).toBe(1);
+    expect(relDelta(3)).toBe(3);
+    expect(relDelta(127)).toBe(-1);
+    expect(relDelta(65)).toBe(-63);
+    expect(relDelta(64)).toBe(0);
+  });
+  it('gamepad sticks come in as 0..1 and gamepad buttons as pressed / released', () => {
+    expect(norm2({ kind: 'axis', ch: 0, num: 0, value: 0.25 })).toBe(0.25);
+    expect(norm2({ kind: 'axis', ch: 0, num: 0, value: 3 })).toBe(1);
+    expect(isOn2({ kind: 'gbtn', ch: 0, num: 2, value: 127 })).toBe(true);
+    expect(isOn2({ kind: 'gbtn', ch: 0, num: 2, value: 0 })).toBe(false);
+    expect(key2({ kind: 'gbtn', ch: 1, num: 4, value: 127 })).toBe('gbtn:1:4');
+    expect(key2({ kind: 'axis', ch: 0, num: 1, value: 0.5 })).toBe('axis:0:1');
   });
 });

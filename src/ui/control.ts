@@ -67,7 +67,7 @@ function renderKeys(): void {
   const rows = BIND.filter(r => !/^pad[1-37]$/.test(r[0]) && r[0] !== 'pad5' && r[0] !== 'pad6').map(r => {
     const id = (d: number) => `${r[0]}|${r[3]}|${d}`;
     const code = (d: number) => all.find(s => s.id === id(d))?.code ?? '';
-    return `<tr><td>${r[3] ? '⇧ ' : ''}${esc(r[4])}</td><td>${cell(id(0), code(0))}</td><td>${cell(id(1), code(1))}</td></tr>`;
+    return `<tr><td>${r[3] ? '⇧ ' : ''}${esc(r[4])}</td>${[0, 1, 2, 3].map(d => `<td>${cell(id(d), code(d))}</td>`).join('')}</tr>`;
   }).join('');
   $('#ctrlBody').innerHTML = `
     <div class="cRow">
@@ -77,7 +77,7 @@ function renderKeys(): void {
       <button class="hbtn" id="keysReset">Varsayılana dön</button>
     </div>
     <p class="note">Bir hücreye tıkla, yeni tuşa bas. <b>Esc</b> iptal, <b>Delete</b> tuşu kaldırır. Tuş başka bir kontrolde varsa onay sorulur; o kontrolün tuşu kalkar.</p>
-    <table class="cTable kmap"><tr><th>Kontrol</th><th>Deck A</th><th>Deck B</th></tr>${rows}</table>
+    <table class="cTable kmap"><tr><th>Kontrol</th><th>Deck A</th><th>Deck B</th><th>Deck C</th><th>Deck D</th></tr>${rows}</table>
     <fieldset><legend>Dosya olarak sakla / yükle</legend>
       <div class="cRow"><button class="hbtn" id="keysExp">Dışa aktar</button><button class="hbtn" id="keysImp">İçe aktar</button></div>
       <textarea id="ctrlTxt" rows="4" placeholder="Dışa aktarılan metin burada görünür; yüklemek için metni buraya yapıştır"></textarea>

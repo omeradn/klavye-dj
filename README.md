@@ -2,7 +2,7 @@
 
 Tarayıcıda çalışan, klavye ve mouse ile kontrol edilen DJ uygulaması. Hedef: profesyonel bir DJ yazılımı + DJ'liği adım adım öğreten bir akademi + restoran setleri için özel modlar.
 
-> Durum: **Faz 5a tamam** (🎛️ Kontrol: MIDI Learn, tuş haritası, JSON) · **Faz 4 tamam** (🎓 DJ Akademi: 14 ders, Beatmatch Antrenörü, Geçiş Sınavı, Kulak Egzersizi, hayalet eller) · **Faz 3 tamam** — pad'ler ve sampler, Ritim FX, Kanal FX, fader eğrileri, isolator, mikrofon + ducking · **Faz 2 tamam** — ses motoru, kulaklık cue, kütüphane (playlist, geçmiş, etiket), beatgrid, gerçek SYNC, quantize, Türk ritimleri, ton tespiti ve Ton Çarkı, 3 renkli dalga formu. Yol haritası için [CHANGELOG.md](CHANGELOG.md).
+> Durum: **Faz 6a tamam** (🍽️ Restoran Modu) · **Faz 5 tamam** (4 deck, MIDI, gamepad, jog, LED; tablet düzeni ertelendi) · **Faz 4 tamam** (🎓 DJ Akademi: 14 ders, Beatmatch Antrenörü, Geçiş Sınavı, Kulak Egzersizi, hayalet eller) · **Faz 3 tamam** — pad'ler ve sampler, Ritim FX, Kanal FX, fader eğrileri, isolator, mikrofon + ducking · **Faz 2 tamam** — ses motoru, kulaklık cue, kütüphane (playlist, geçmiş, etiket), beatgrid, gerçek SYNC, quantize, Türk ritimleri, ton tespiti ve Ton Çarkı, 3 renkli dalga formu. Yol haritası için [CHANGELOG.md](CHANGELOG.md).
 
 ## Canlı sürüm
 **https://omeradn.github.io/klavye-dj/** — kurulum gerekmez, Chrome ya da Edge ile açılır.
@@ -123,6 +123,15 @@ Her deck'te 8 pad var; ne yapacaklarını üstteki mod belirler (**5** / **6** i
 - **TUŞLAR** sekmesinde bir hücreye tıkla, yeni tuşa bas. Çakışırsa sorulur.
 - Ayarları dosya olarak dışa aktarıp yapıştırarak başka bir bilgisayarda yükleyebilirsin.
 - Shift + tekerlek: ince ayar.
+
+## Restoran Modu
+- **🍽️ RESTORAN** kartında **OTOMATİK**'i aç: şarkılar sırayla, phrase başında ve 32 ölçü geçişle gelir.
+- **KİLİT** çalan şarkıyı yanlışlıkla durdurmaz. **ACİL KIS** sesi hemen düşürür. **TAVAN** master üst sınırıdır.
+- Kütüphanede bir liste **"Restoran"** adında olursa otomatik geçişler yalnızca o listeden seçer.
+
+## Dört deck ve kontrolcüler
+- **4 DECK** ile C ve D deck'lerini aç. Her kanalın ◀ ▶ ● düğmesi crossfader tarafını seçer.
+- 🎛️ Kontrol → **TUŞLAR**'da C ve D için tuş ata (varsayılan boş). **MIDI** sekmesinde knob, fader, düğme, jog tekerleği ve gamepad (çubuk/düğme) bağlanır; kontrolcünün ışıkları bağlı düğmelerle yanar.
 
 ## Kulaklık
 - Her kanaldaki **🎧 CUE** o kanalı kulaklığa gönderir (fader'dan önce, yani kanal kapalıyken de duyulur).

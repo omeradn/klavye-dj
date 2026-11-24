@@ -7,6 +7,7 @@ import { loadUserSample, playSample, resetSample, sampler } from './sampler';
 import { CHAN_FX, chanFx, crushCurve, cutoff } from './chanfx';
 import { chGain, isoGain, mixerCfg } from './mixercfg';
 import { rules } from '../academy/rules';
+import { locked } from '../restaurant/automix';
 import { impulse } from './beatfx';
 import { detectBPM } from '../analysis/bpm';
 import {
@@ -31,6 +32,8 @@ const JOG_RING = 0.8;
  * so it only decides quality and how long we stay on the original signal after a jump.
  */
 const KEYLOCK_BLOCK_MS = 120;
+const DECK_COLORS = ['#ff8a3d', '#38c6ff', '#3ce37a', '#b98bff'];
+const SIDE_TEXT = { L: '◀ A', R: 'B ▶', T: '●' } as const;
 
 /**
  * One deck: transport, tempo, cues, loops + its mixer channel strip.
@@ -54,6 +57,11 @@ export class Deck {
 
   readonly id: string;
   readonly i: number;
+  /** crossfader side: L = left (cos), R = right (sin), T = through (always full, the fader does not touch it) */
+  xfSide: 'L' | 'R' | 'T' = 'L';
+  /** called after the side changed (the mixer re-applies its gains) */
+  onSide?: () => void;
+  sideBtn?: HTMLButtonElement;
   readonly color: string;
   readonly el: HTMLElement;
   readonly ch: HTMLElement;
@@ -147,7 +155,8 @@ export class Deck {
   anBuf = new Float32Array(1024);
 
   constructor(id: string, i: number) {
-    this.id = id; this.i = i; this.color = i ? '#38c6ff' : '#ff8a3d';
+    this.id = id; this.i = i; this.color = DECK_COLORS[i] ?? '#ff8a3d';
+    this.xfSide = i % 2 === 0 ? 'L' : 'R';
     this.demoIdx = i;
     this.el = $('#deck' + id); this.ch = $('#ch' + id);
     this.buildDeck(); this.buildChannel();
@@ -172,6 +181,13 @@ export class Deck {
   }
 
   get has(): boolean { return this.len > 0; }
+
+  /** Where the crossfader acts on this deck. */
+  setSide(s: 'L' | 'R' | 'T'): void {
+    this.xfSide = s;
+    if (this.sideBtn) this.sideBtn.textContent = SIDE_TEXT[s];
+    this.onSide?.();
+  }
   get duration(): number { return this.len / this.sr; }
 
   /** Current play position in seconds (worklet snapshot + extrapolation). */
@@ -378,6 +394,11 @@ export class Deck {
     this.fxK.el.style.width = this.fxK.el.style.height = '34px';
     this.fxK.ind.style.transformOrigin = '50% 13px'; this.fxK.ind.style.height = '9px';
 
+    this.sideBtn = document.createElement('button'); this.sideBtn.className = 'b sm side'; this.sideBtn.dataset.a = 'side';
+    this.sideBtn.title = 'Crossfader tarafı: ◀ sol · ▶ sağ · ● her zaman açık (fader bunu etkilemez). Tıkla: değiştir';
+    this.sideBtn.onclick = () => this.setSide(this.xfSide === 'L' ? 'R' : this.xfSide === 'R' ? 'T' : 'L');
+    this.sideBtn.textContent = SIDE_TEXT[this.xfSide];
+    c.appendChild(this.sideBtn);
     this.pflBtn = document.createElement('button'); this.pflBtn.className = 'b pfl'; this.pflBtn.dataset.a = 'pfl';
     this.pflBtn.textContent = '🎧 CUE';
     this.pflBtn.title = 'Bu kanalı kulaklıkta dinle (fader ve crossfader kapalıyken de duyulur)';
@@ -846,6 +867,7 @@ export class Deck {
     switch (a) {
       case 'play':
         if (!has) return;
+        if (locked() && this.playing) { toast('Kilitli (Restoran Modu): durdurmak için önce kilidi aç'); return; }
         if (this.cuePreview) { this.cuePreview = false; return; } // CUE held + PLAY = keep playing
         this.setPlaying(!this.playing);
         break;
@@ -946,6 +968,13 @@ export class Deck {
   }
 
   setBend(v: number): void { this.bend = v; this.applyRate(); }
+
+  /** Jog wheel from a controller: one step nudges the speed while playing, or scrubs while paused. */
+  jog(step: number): void {
+    if (!this.has || !step) return;
+    if (this.playing) { this.jogBend = clamp(step * 0.012, -0.3, 0.3); this.jogStamp = performance.now(); this.applyRate(); }
+    else this.seek(this.currentTime() + step * 0.02);
+  }
 
   applyRate(): void { this.post({ t: 'tempo', v: this.speed() }); this.updateKeylock(); }
 
