@@ -1,11 +1,11 @@
 import type { Deck } from '../engine/deck';
-import { BIND, HOT_KEYS } from '../input/keyboard';
+import { BIND, codeOf, keymapCfg, HOT_KEYS } from '../input/keymap';
 import { $, keyLabel } from '../util';
 
 function badge(el: Element | null, txt: string): void {
   if (!el) return;
   const s = document.createElement('span');
-  s.className = 'k'; s.textContent = txt;
+  s.className = 'k'; s.textContent = txt; s.dataset.kbadge = '1';
   el.appendChild(s);
 }
 
@@ -14,7 +14,7 @@ export function setupBadges(decks: Deck[]): void {
   decks.forEach((d, i) => {
     const kk = (a: string, sh: 0 | 1) => {
       const b = BIND.find(x => x[0] === a && x[3] === sh);
-      return b ? (sh ? '⇧' : '') + keyLabel(i ? b[2] : b[1]) : '';
+      return b ? (sh ? '⇧' : '') + keyLabel(codeOf(b, i, keymapCfg.ov)) : '';
     };
     const q = (a: string) => d.el.querySelector(`[data-a="${a}"]`);
     badge(q('play'), kk('play', 0)); badge(q('load'), kk('load', 1)); badge(q('cue'), kk('cue', 0)); badge(q('sync'), kk('sync', 0));
@@ -26,7 +26,10 @@ export function setupBadges(decks: Deck[]): void {
     badge(q('censor'), kk('censor', 0)); badge(q('brake'), kk('brake', 1)); badge(q('spinback'), kk('spinback', 1));
     badge(q('keyUp'), kk('keyUp', 0)); badge(q('keyDown'), kk('keyDown', 1));
     badge(q('jog'), '🖱 çevir');
-    for (let n = 0; n < 8; n++) badge(q('pad' + n), (n > 3 ? '⇧' : '') + keyLabel(HOT_KEYS[i][n % 4]));
+    for (let n = 0; n < 8; n++) {
+      const row = BIND.find(r => r[0] === 'pad' + n)!;
+      badge(q('pad' + n), (n > 3 ? '⇧' : '') + keyLabel(codeOf(row, i, keymapCfg.ov)));
+    }
     const cq = (a: string) => d.ch.querySelector(`[data-a="${a}"]`);
     badge(cq('killHigh'), kk('killHigh', 0)); badge(cq('killMid'), kk('killMid', 0)); badge(cq('killLow'), kk('killLow', 0));
     badge(cq('filter'), kk('filterDown', 1) + '/' + kk('filterUp', 1).replace('⇧', ''));
@@ -34,4 +37,10 @@ export function setupBadges(decks: Deck[]): void {
     badge(cq('fader'), kk('faderDown', 1) + '/' + kk('faderUp', 1).replace('⇧', ''));
   });
   badge($('#masterK'), 'PgUp/PgDn');
+}
+
+/** Re-draw the key labels after the key map changed. */
+export function refreshBadges(decks: Deck[]): void {
+  document.querySelectorAll('[data-kbadge]').forEach(e => e.remove());
+  setupBadges(decks);
 }

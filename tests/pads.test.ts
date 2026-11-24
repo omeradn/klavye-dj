@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { padLabel, sliceBase, LOOP_BEATS, JUMP_BEATS, ROLL_BEATS, KEY_SEMIS, PAD_MODES } from '../src/engine/padmodes';
 import { SOUNDS } from '../src/demo/sounds';
-import { buildKeymap } from '../src/input/keyboard';
+import { buildKeymap } from '../src/input/keymap';
 
 describe('pad modes', () => {
   it('has 7 modes and 8 values per mode', () => {

@@ -14,6 +14,7 @@
   </div>
   <div class="mwrap" title="Sampler ses seviyesi (pad'ler SAMPLER modunda)">SAMPLER <div class="kwrap" id="sampK"></div></div>
   <div class="mwrap">MASTER <div class="kwrap" id="masterK"></div></div>
+  <button class="hbtn" id="ctrlBtn" title="MIDI kontrolcü bağla (Learn) ve tuşları değiştir">🎛️ Kontrol</button>
   <button class="hbtn acad" id="acadBtn" title="Adım adım DJ dersleri (F4)">🎓 Akademi <kbd>F4</kbd></button>
   <button class="hbtn" id="setBtn">Ses ayarları <kbd>F2</kbd></button>
   <button class="hbtn" id="keysBtn">Tuş etiketleri</button>
@@ -126,6 +127,11 @@
   <h2 style="margin:0 0 12px">Ses ayarları</h2>
   <div id="setBody"></div>
   <button class="hbtn" id="setClose">Kapat</button>
+</div></div>
+<div id="control"><div class="box">
+  <div class="acHead"><h2>🎛️ Kontrol</h2><button class="hbtn" id="ctrlClose">Kapat</button></div>
+  <div class="seg" id="ctrlTabs"><button data-t="midi">MIDI</button><button data-t="keys">TUŞLAR</button></div>
+  <div id="ctrlBody"></div>
 </div></div>
 <div id="academy"><div class="box">
   <div class="acHead"><h2>🎓 DJ Akademi</h2><button class="hbtn" id="acClose">Kapat</button></div>

@@ -32,7 +32,7 @@ export class Knob {
     this.el.addEventListener('pointerup', end);
     this.el.addEventListener('pointercancel', end);
     this.el.addEventListener('dblclick', () => { this.set(this.def); this.onreset?.(); });
-    this.el.addEventListener('wheel', e => { e.preventDefault(); e.stopPropagation(); this.nudge(e.deltaY < 0 ? 1 : -1); }, { passive: false });
+    this.el.addEventListener('wheel', e => { e.preventDefault(); e.stopPropagation(); this.nudge((e.deltaY < 0 ? 1 : -1) * (e.shiftKey ? 0.2 : 1)); }, { passive: false });
     this.set(this.def);
   }
 
@@ -73,7 +73,7 @@ export class Fader {
     el.addEventListener('pointerup', end);
     el.addEventListener('pointercancel', end);
     el.addEventListener('dblclick', () => this.set(this.def));
-    el.addEventListener('wheel', e => { e.preventDefault(); e.stopPropagation(); this.nudge(e.deltaY < 0 ? 1 : -1); }, { passive: false });
+    el.addEventListener('wheel', e => { e.preventDefault(); e.stopPropagation(); this.nudge((e.deltaY < 0 ? 1 : -1) * (e.shiftKey ? 0.2 : 1)); }, { passive: false });
     this.set(this.def);
   }
 

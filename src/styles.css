@@ -346,3 +346,28 @@ kbd{background:#000;border:1px solid #444b57;border-bottom-width:2px;border-radi
 .cChoices .hbtn:hover{border-color:var(--amber)}
 .acad-nowave .waves canvas{visibility:hidden}
 .acad-nowave .waves .wcan{background:repeating-linear-gradient(135deg,#14171b 0 10px,#101215 10px 20px)}
+
+/* Kontrol penceresi (Faz 5) */
+#control{position:fixed;inset:0;background:#05060899;backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;z-index:25}
+#control.show{display:flex}
+#control .box{background:var(--body);border:1px solid var(--line);border-radius:16px;padding:18px 22px;width:94%;max-width:820px;max-height:90vh;overflow:auto}
+#control .acHead{display:flex;justify-content:space-between;align-items:center}
+#control .acHead h2{margin:0}
+#ctrlTabs{margin:12px 0}
+#ctrlTabs button{padding:7px 16px}
+.cStatus{color:var(--mut);margin:6px 0 10px}
+.cRow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:6px 0}
+#control fieldset{border:1px solid var(--line);border-radius:10px;margin:12px 0;padding:10px 14px}
+#control legend{color:var(--mut);font-size:11px;letter-spacing:1px;padding:0 6px}
+#control select,#control textarea{background:#0f1114;color:var(--txt);border:1px solid var(--line);border-radius:6px;padding:6px 8px;max-width:100%}
+#control textarea{width:100%;font:12px ui-monospace,monospace;margin-top:6px;box-sizing:border-box}
+.cTable{width:100%;border-collapse:collapse;margin-top:8px;font-size:13px}
+.cTable th{text-align:left;color:var(--mut);font-weight:500;padding:5px 8px;border-bottom:1px solid var(--line)}
+.cTable td{padding:5px 8px;border-bottom:1px solid #23272e}
+.cTable.kmap td:nth-child(n+2){width:110px}
+.kc{min-width:86px;background:#16191d;border:1px solid #2f343d;border-radius:6px;color:var(--txt);padding:4px 8px;cursor:pointer;font:12px system-ui,sans-serif}
+.kc:hover{border-color:var(--amber)}
+.kc.waiting{border-color:var(--amber);color:var(--amber);animation:kcblink 1s steps(2) infinite}
+@keyframes kcblink{50%{opacity:.4}}
+.kc kbd{font-size:12px}
+#control code{background:#0f1114;border-radius:4px;padding:1px 6px;font-size:12px}

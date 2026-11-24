@@ -13,6 +13,9 @@ import { setupLibrary } from './library/library';
 import { buildSampler, sampler, setSamplerLevel } from './engine/sampler';
 import { buildFxPoints } from './engine/beatfx';
 import { setupAcademy, toggleAcademy } from './academy/panel';
+import { setupControl, toggleControl, controlOpen } from './ui/control';
+import { registerCont, parseMidi, handleMidi, midiCfg } from './midi/midi';
+import { ritimFx } from './engine/beatfx';
 import { inLesson, stopLesson } from './academy/engine';
 import { chanFxNext, fxBeats, fxFrame, fxLevel, fxNext, fxTarget, fxToggle, mixerFrame, setupFxBar, setupMixerBar, wireFx } from './ui/fxbar';
 
@@ -100,7 +103,8 @@ export function initApp(): void {
     PageUp: () => masterK.nudge(1),
     PageDown: () => masterK.nudge(-1),
     Escape: () => {
-      if (settingsOpen()) toggleSettings(false);
+      if (controlOpen()) toggleControl(false);
+      else if (settingsOpen()) toggleSettings(false);
       else if (document.querySelector('#academy.show')) toggleAcademy(false);
       else toggleHelp();
     },
@@ -117,11 +121,28 @@ export function initApp(): void {
   });
 
   // dev-only handle for debugging in the browser console (not in production builds)
-  if (import.meta.env.DEV) (window as unknown as Record<string, unknown>).kdj = { decks, engine, mixer, out: outputNodes };
+  if (import.meta.env.DEV) (window as unknown as Record<string, unknown>).kdj = { decks, engine, mixer, out: outputNodes, midi: { parseMidi, handleMidi, midiCfg } };
 
   setupFxBar(decks);
   setupMixerBar();
   setupAcademy({ decks, mixer, xf });
+  setupControl(decks);
+  // everything a MIDI knob or fader can move (keys and buttons are learned through the key map)
+  decks.forEach((d, i) => {
+    const L = i ? 'B' : 'A', C = (id: string, label: string, min: number, max: number, set: (v: number) => void) =>
+      registerCont({ id: `${id}:${i}`, label: `${label} · Deck ${L}`, min, max, set });
+    C('tempo', 'Tempo', -0.16, 0.16, v => d.tempoF.set(v));
+    C('chf', 'Kanal fader', 0, 1, v => d.chF.set(v));
+    C('filter', 'Filtre / kanal FX', -1, 1, v => d.filK.set(v));
+    C('low', 'LOW', -26, 6, v => d.loK.set(v));
+    C('mid', 'MID', -26, 6, v => d.midK.set(v));
+    C('hi', 'HI', -26, 6, v => d.hiK.set(v));
+    C('trim', 'TRIM', 0, 2, v => d.trimK.set(v));
+  });
+  registerCont({ id: 'xf', label: 'Crossfader', min: -1, max: 1, set: v => xf.set(v) });
+  registerCont({ id: 'master', label: 'Master ses', min: 0, max: 1, set: v => masterK.set(v) });
+  registerCont({ id: 'phones', label: 'Kulaklık seviyesi', min: 0, max: 1, set: v => phLevelK.set(v) });
+  registerCont({ id: 'fxlevel', label: 'Ritim FX seviyesi', min: 0, max: 1, set: v => ritimFx.setLevel(v) });
   setupBadges(decks);
   setupSettings();
   void setupLibrary(decks);

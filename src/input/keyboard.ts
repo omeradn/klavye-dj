@@ -1,58 +1,17 @@
 import type { Deck } from '../engine/deck';
 import { ensureCtx } from '../engine/context';
+import { buildKeymap, keymapCfg, onKeymapChange, type KEntry } from './keymap';
 
-/** r = key repeat allowed, h = hold (active while pressed) */
-export type KeyMode = 'r' | 'h';
-/** [action, key on deck A, key on deck B, shift layer?, help label, mode] — keys are physical KeyboardEvent.code values */
-export type Bind = [action: string, keyA: string, keyB: string, shift: 0 | 1, label: string, mode?: KeyMode];
+export { BIND, HOT_KEYS, type Bind, type KeyMode, type KEntry } from './keymap';
 
-export const BIND: Bind[] = [
-  ['play', 'KeyQ', 'KeyY', 0, 'Çal / Durdur'], ['load', 'KeyQ', 'KeyY', 1, 'Şarkı yükle'],
-  ['cue', 'KeyW', 'KeyU', 0, 'CUE (dururken koy · çalarken dön · cue üstünde basılı tut = dinle)', 'h'],
-  ['brake', 'KeyW', 'KeyU', 1, 'BRAKE (plak gibi yavaşça dur)'],
-  ['vinyl', 'KeyR', 'KeyO', 1, 'VINYL modu (jog ile scratch)'],
-  ['reverse', 'Tab', 'BracketLeft', 0, 'REV (ters çal)'], ['slip', 'Tab', 'BracketLeft', 1, 'SLIP modu'],
-  ['censor', 'IntlBackslash', 'Slash', 0, 'CENSOR (basılı tut)', 'h'], ['spinback', 'IntlBackslash', 'Slash', 1, 'SPIN (geri savurup dur)'],
-  ['keyUp', 'Backquote', 'BracketRight', 0, 'Ton +1 yarım ses'], ['keyDown', 'Backquote', 'BracketRight', 1, 'Ton −1 yarım ses'],
-  ['padModeNext', 'Digit5', 'Digit6', 0, 'Pad modu: sonraki (HOT CUE → LOOP → JUMP → SLICER → ROLL → SAMPLER → TON)'],
-  ['padModePrev', 'Digit5', 'Digit6', 1, 'Pad modu: önceki'],
-  ['sync', 'KeyE', 'KeyI', 0, 'SYNC (tempo + vuruş kilidi · tekrar bas = kapat)'], ['keylock', 'KeyE', 'KeyI', 1, 'Key Lock'],
-  ['loop', 'KeyR', 'KeyO', 0, 'Loop aç / kapat'], ['loopDouble', 'KeyT', 'KeyP', 0, 'Loop ×2'], ['loopHalf', 'KeyT', 'KeyP', 1, 'Loop ½'],
-  ['tempoDown', 'KeyA', 'KeyH', 0, 'Tempo −', 'r'], ['tempoUp', 'KeyS', 'KeyJ', 0, 'Tempo +', 'r'],
-  ['bendDown', 'KeyD', 'KeyK', 0, 'Pitch bend − (basılı tut)', 'h'], ['bendUp', 'KeyF', 'KeyL', 0, 'Pitch bend + (basılı tut)', 'h'],
-  ['tempoReset', 'KeyG', 'Semicolon', 0, 'Tempo sıfırla'],
-  ['faderDown', 'KeyA', 'KeyH', 1, 'Kanal fader −', 'r'], ['faderUp', 'KeyS', 'KeyJ', 1, 'Kanal fader +', 'r'],
-  ['filterDown', 'KeyD', 'KeyK', 1, 'Filtre ← (low-pass)', 'r'], ['filterUp', 'KeyF', 'KeyL', 1, 'Filtre → (high-pass)', 'r'],
-  ['filterReset', 'KeyG', 'Semicolon', 1, 'Filtre ortala'],
-  ['killLow', 'KeyZ', 'KeyN', 0, 'LOW kill'], ['killMid', 'KeyX', 'KeyM', 0, 'MID kill'], ['killHigh', 'KeyC', 'Comma', 0, 'HI kill'],
-  ['eqReset', 'KeyZ', 'KeyN', 1, 'EQ sıfırla'], ['fx', 'KeyV', 'Period', 0, 'ECHO aç / kapat'],
-  ['pfl', 'KeyV', 'Period', 1, 'Kulaklık CUE (bu kanalı kulaklıkta dinle)'],
-  ['fxDown', 'KeyX', 'KeyM', 1, 'ECHO seviye −', 'r'], ['fxUp', 'KeyC', 'Comma', 1, 'ECHO seviye +', 'r'],
-  ['pad0', 'Digit1', 'Digit7', 0, 'Pad 1', 'h'], ['pad1', 'Digit2', 'Digit8', 0, 'Pad 2', 'h'],
-  ['pad2', 'Digit3', 'Digit9', 0, 'Pad 3', 'h'], ['pad3', 'Digit4', 'Digit0', 0, 'Pad 4', 'h'],
-  ['pad4', 'Digit1', 'Digit7', 1, 'Pad 5', 'h'], ['pad5', 'Digit2', 'Digit8', 1, 'Pad 6', 'h'],
-  ['pad6', 'Digit3', 'Digit9', 1, 'Pad 7', 'h'], ['pad7', 'Digit4', 'Digit0', 1, 'Pad 8', 'h'],
-];
-
-export const HOT_KEYS = [['Digit1', 'Digit2', 'Digit3', 'Digit4'], ['Digit7', 'Digit8', 'Digit9', 'Digit0']];
-
-interface KEntry { d: number; a: string; arg?: number; mode?: KeyMode }
-
-/** code (+ "+S" for the shift layer) -> action */
-export function buildKeymap(): Record<string, KEntry> {
-  const K: Record<string, KEntry> = {};
-  for (const [a, ka, kb, sh, , mode] of BIND) {
-    const sfx = sh ? '+S' : '';
-    if (a.startsWith('pad') && /\d$/.test(a)) {
-      const i = +a.slice(3);
-      K[ka + sfx] = { d: 0, a: 'pad', arg: i, mode };
-      K[kb + sfx] = { d: 1, a: 'pad', arg: i, mode };
-    } else {
-      K[ka + sfx] = { d: 0, a, mode };
-      K[kb + sfx] = { d: 1, a, mode };
-    }
-  }
-  return K;
+/** Run one control (keyboard or MIDI). `on` = pressed / released. `alt` = Backspace held (pads' second function). */
+export function pressSlot(decks: Deck[], m: KEntry, on: boolean, alt = false): void {
+  const d = decks[m.d];
+  if (m.a === 'pad') {
+    if (on && alt) d.padAlt(m.arg!);
+    else if (on || !alt) d.pad(m.arg!, on);
+  } else if (m.mode === 'h') d.hold(m.a, on);
+  else if (on) d.act(m.a, m.arg);
 }
 
 function isTyping(t: EventTarget | null): boolean {
@@ -62,7 +21,8 @@ function isTyping(t: EventTarget | null): boolean {
 }
 
 export function setupKeyboard(decks: Deck[], global: Record<string, (e: KeyboardEvent) => void>): void {
-  const KMAP = buildKeymap();
+  let KMAP = buildKeymap(keymapCfg.ov);
+  onKeymapChange(() => { KMAP = buildKeymap(keymapCfg.ov); });
 
   // A mouse click leaves the button focused; Space/Enter would then re-trigger it
   // (e.g. click PLAY, press Space -> music stops). Drop focus right after a click.
@@ -76,16 +36,8 @@ export function setupKeyboard(decks: Deck[], global: Record<string, (e: Keyboard
   /** Backspace held = pads do their second function (delete hot cue / load own sampler sound) */
   let alt = false;
 
-  const press = (m: KEntry, on: boolean) => {
-    const d = decks[m.d];
-    if (m.a === 'pad') {
-      if (on && alt) d.padAlt(m.arg!);
-      else if (on || !alt) d.pad(m.arg!, on);
-    } else if (m.mode === 'h') d.hold(m.a, on);
-    else if (on) d.act(m.a, m.arg);
-  };
-
   document.addEventListener('keydown', e => {
+    if (keymapCfg.capturing) return;  // the control panel is asking for a new key
     if (e.ctrlKey || e.metaKey || e.altKey) return;
     if (isTyping(e.target)) return;   // typing in the library search box
     if (e.code === 'Backspace') { alt = true; e.preventDefault(); return; }
@@ -97,15 +49,15 @@ export function setupKeyboard(decks: Deck[], global: Record<string, (e: Keyboard
     e.preventDefault(); ensureCtx();
     if (e.repeat && m.mode !== 'r') return;
     if (m.mode === 'h') held.set(e.code, m);
-    press(m, true);
+    pressSlot(decks, m, true, alt);
   });
 
   document.addEventListener('keyup', e => {
     if (e.code === 'Backspace') { alt = false; return; }
     const m = held.get(e.code);
-    if (m) { held.delete(e.code); press(m, false); }
+    if (m) { held.delete(e.code); pressSlot(decks, m, false, alt); }
     if (e.key === 'Shift') decks.forEach(d => { if (d.bend) d.setBend(0); });
   });
   // window lost focus with keys down: release everything (no stuck rolls / bends)
-  addEventListener('blur', () => { for (const m of held.values()) press(m, false); held.clear(); alt = false; });
+  addEventListener('blur', () => { for (const m of held.values()) pressSlot(decks, m, false, alt); held.clear(); alt = false; });
 }

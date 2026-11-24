@@ -168,7 +168,7 @@ export class Deck {
       });
     });
     // wheel anywhere on deck (not on a control) = tempo
-    this.el.addEventListener('wheel', e => { e.preventDefault(); this.tempoF.nudge(e.deltaY < 0 ? 1 : -1); }, { passive: false });
+    this.el.addEventListener('wheel', e => { e.preventDefault(); this.tempoF.nudge((e.deltaY < 0 ? 1 : -1) * (e.shiftKey ? 0.2 : 1)); }, { passive: false });
   }
 
   get has(): boolean { return this.len > 0; }

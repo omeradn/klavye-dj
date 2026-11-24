@@ -23,7 +23,18 @@ const TR: Record<string, string> = {
   Semicolon: 'Ş', Comma: 'Ö', Period: 'Ç', Slash: '.', BracketLeft: 'Ğ', BracketRight: 'Ü', Quote: 'İ',
   IntlBackslash: '<', Backquote: '"', Minus: '*', Equal: '-', Backslash: ',',
 };
-export const keyLabel = (c: string): string => TR[c] || c.replace(/^Key|^Digit/, '');
+/** Symbols printed on a US keyboard for the same physical keys. */
+const US: Record<string, string> = {
+  Semicolon: ';', Comma: ',', Period: '.', Slash: '/', BracketLeft: '[', BracketRight: ']', Quote: "'",
+  IntlBackslash: '\\', Backquote: '`', Minus: '-', Equal: '=', Backslash: '\\',
+};
+/** Label layout: 'tr' = Türkçe Q, 'us' = US (the keys are the same physical keys either way). */
+let labelLayout: 'tr' | 'us' = 'tr';
+export function setLabelLayout(l: 'tr' | 'us'): void { labelLayout = l; }
+export const keyLabel = (c: string): string => {
+  if (labelLayout === 'us') return US[c] || c.replace(/^Key|^Digit/, '');
+  return TR[c] || c.replace(/^Key|^Digit/, '');
+};
 
 /** Only touch the DOM when the text actually changed (cheap per-frame updates). */
 export function setText(el: Element, s: string): void {
